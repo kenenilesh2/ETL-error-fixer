@@ -403,7 +403,7 @@ function App() {
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col items-center justify-center p-6 relative">
           <div className="absolute top-0 left-0 right-0 p-6 flex justify-between items-center z-10">
               <h1 className="text-xl font-bold text-gray-800 tracking-tight flex items-center gap-2">
-                 <Shield className="w-6 h-6 text-indigo-600" /> ETL Fixer AI
+                 <Shield className="w-6 h-6 text-indigo-600" /> ETL Remedy
               </h1>
               <div className="flex items-center gap-4">
                   <div className="flex flex-col items-end mr-2">

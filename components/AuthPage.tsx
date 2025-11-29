@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabaseClient';
-import { Loader2, AlertCircle, User, Phone, Mail, Lock, ArrowLeft, CheckCircle, KeyRound, RefreshCw, Settings, Info } from 'lucide-react';
+import { Loader2, AlertCircle, User, Phone, Mail, Lock, ArrowLeft, CheckCircle, KeyRound, RefreshCw, Shield, Zap, TrendingUp, Check } from 'lucide-react';
 
 interface AuthPageProps {
   onLogin: (user?: any) => void;
@@ -119,8 +119,6 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login' }: AuthPageP
                 console.warn("OTP Verification failed:", error.message);
                 
                 // 2. SMART FALLBACK: 
-                // If OTP failed (maybe expired or user clicked link?), try logging in with password.
-                // If they are already verified, this will succeed and solve the issue.
                 if (cleanPassword) {
                     const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
                         email: cleanEmail,
@@ -133,7 +131,6 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login' }: AuthPageP
                     }
                 }
 
-                // If fallback failed, show meaningful error
                 if (error.message.includes("expired") || error.message.includes("invalid")) {
                     throw new Error("Invalid or expired code. Did you request a new one? Only the latest code works.");
                 }
@@ -166,54 +163,56 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login' }: AuthPageP
       // --- VERIFY OTP VIEW ---
       if (view === 'verify') {
           return (
-              <div className="space-y-4 animate-fade-in">
-                  <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-lg mb-4">
-                      <p className="text-sm text-indigo-800 font-medium text-center">We sent a code to <br/><span className="font-bold">{email}</span></p>
-                      <p className="text-xs text-indigo-500 mt-1 text-center">Check your spam folder.</p>
+              <div className="space-y-6 animate-fade-in">
+                  <div className="text-center space-y-2 mb-8">
+                      <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mx-auto text-indigo-600 mb-4">
+                          <Mail className="w-6 h-6" />
+                      </div>
+                      <h3 className="text-2xl font-bold text-gray-900">Check your email</h3>
+                      <p className="text-gray-500">We sent a verification code to <span className="font-semibold text-gray-800">{email}</span></p>
                   </div>
                   
                   <form onSubmit={handleAuth}>
                     <div>
-                        <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Confirmation Code</label>
                         <div className="relative">
-                            <KeyRound className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+                            <KeyRound className="w-5 h-5 absolute left-3 top-3.5 text-gray-400" />
                             <input 
                             type="text" 
                             required 
                             maxLength={8}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all tracking-[0.5em] font-mono text-center font-bold text-lg"
+                            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all tracking-[0.5em] font-mono text-center font-bold text-xl text-gray-800"
                             placeholder="000000"
                             value={otp}
                             onChange={e => setOtp(e.target.value.replace(/[^0-9]/g, ''))}
                             />
                         </div>
-                        <p className="text-[10px] text-gray-400 mt-1 text-center">Enter the most recent code received.</p>
+                        <p className="text-xs text-gray-400 mt-2 text-center">Enter the most recent code received.</p>
                     </div>
                     <button 
                         type="submit" 
                         disabled={loading || otp.length < 6}
-                        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-lg transition-all shadow-md hover:shadow-lg mt-6 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3 rounded-lg transition-all shadow-lg hover:shadow-xl mt-6 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                        {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-                        Verify & Login
+                        {loading && <Loader2 className="w-5 h-5 animate-spin" />}
+                        Verify & Access
                     </button>
                    </form>
 
-                   <div className="flex flex-col gap-2 mt-4">
+                   <div className="flex flex-col gap-3 mt-6">
                         <button 
                             type="button"
                             onClick={handleResendOtp}
                             disabled={resendTimer > 0 || loading}
-                            className="w-full bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-medium py-2 rounded-lg transition-all text-xs flex items-center justify-center gap-2 disabled:opacity-50"
+                            className="w-full bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-medium py-2.5 rounded-lg transition-all text-sm flex items-center justify-center gap-2 disabled:opacity-50"
                         >
-                            {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
                             {resendTimer > 0 ? `Resend Code in ${resendTimer}s` : "Resend Code"}
                         </button>
                         
                         <button 
                             type="button"
                             onClick={() => setView('register')}
-                            className="w-full text-gray-500 hover:text-gray-700 font-medium py-2 flex items-center justify-center gap-2 text-xs"
+                            className="w-full text-gray-500 hover:text-gray-700 font-medium py-2 flex items-center justify-center gap-2 text-sm"
                         >
                             Incorrect email? Go back
                         </button>
@@ -225,15 +224,19 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login' }: AuthPageP
       // --- FORGOT PASSWORD VIEW ---
       if (view === 'forgot') {
           return (
-              <form onSubmit={handleAuth} className="space-y-4 animate-fade-in">
+              <form onSubmit={handleAuth} className="space-y-5 animate-fade-in mt-6">
+                  <div className="text-center mb-8">
+                      <h3 className="text-xl font-bold text-gray-900">Reset Password</h3>
+                      <p className="text-sm text-gray-500 mt-2">Enter your email to receive reset instructions</p>
+                  </div>
                   <div>
-                    <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Email Address</label>
-                    <div className="relative">
-                        <Mail className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+                    <label className="block text-xs font-semibold text-gray-700 uppercase mb-1.5 ml-1">Email Address</label>
+                    <div className="relative group">
+                        <Mail className="w-5 h-5 absolute left-3 top-3.5 text-gray-400 group-focus-within:text-indigo-600 transition-colors" />
                         <input 
                         type="email" 
                         required 
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-gray-50 focus:bg-white"
                         placeholder="name@company.com"
                         value={email}
                         onChange={e => setEmail(e.target.value)}
@@ -243,15 +246,15 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login' }: AuthPageP
                    <button 
                     type="submit" 
                     disabled={loading}
-                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-lg transition-all shadow-md hover:shadow-lg mt-6 flex items-center justify-center gap-2"
+                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg transition-all shadow-lg hover:shadow-xl mt-6 flex items-center justify-center gap-2"
                     >
-                    {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+                    {loading && <Loader2 className="w-5 h-5 animate-spin" />}
                     Send Reset Link
                     </button>
                     <button 
                         type="button"
                         onClick={() => setView('login')}
-                        className="w-full text-gray-500 hover:text-gray-700 font-medium py-2 flex items-center justify-center gap-2"
+                        className="w-full text-gray-500 hover:text-gray-800 font-medium py-2 flex items-center justify-center gap-2 mt-4"
                     >
                         <ArrowLeft className="w-4 h-4" /> Back to Login
                     </button>
@@ -261,48 +264,48 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login' }: AuthPageP
 
       // --- LOGIN & REGISTER VIEW ---
       return (
-        <form onSubmit={handleAuth} className="space-y-4 animate-fade-in">
+        <form onSubmit={handleAuth} className="space-y-5 animate-fade-in mt-2">
             {view === 'register' && (
-              <>
-                 <div>
-                    <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">First Name</label>
-                    <div className="relative">
-                        <User className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+              <div className="grid grid-cols-2 gap-4">
+                 <div className="col-span-1">
+                    <label className="block text-xs font-semibold text-gray-700 uppercase mb-1.5 ml-1">First Name</label>
+                    <div className="relative group">
+                        <User className="w-5 h-5 absolute left-3 top-3.5 text-gray-400 group-focus-within:text-indigo-600 transition-colors" />
                         <input 
                             type="text" 
                             required 
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-gray-50 focus:bg-white"
                             placeholder="John"
                             value={firstName}
                             onChange={e => setFirstName(e.target.value)}
                         />
                     </div>
                 </div>
-                <div>
-                    <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Mobile Number</label>
-                    <div className="relative">
-                        <Phone className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+                <div className="col-span-1">
+                    <label className="block text-xs font-semibold text-gray-700 uppercase mb-1.5 ml-1">Mobile</label>
+                    <div className="relative group">
+                        <Phone className="w-5 h-5 absolute left-3 top-3.5 text-gray-400 group-focus-within:text-indigo-600 transition-colors" />
                         <input 
                             type="tel" 
                             required 
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
-                            placeholder="+1 234 567 8900"
+                            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-gray-50 focus:bg-white"
+                            placeholder="+1 234..."
                             value={mobile}
                             onChange={e => setMobile(e.target.value)}
                         />
                     </div>
                 </div>
-              </>
+              </div>
             )}
 
             <div>
-              <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Email Address</label>
-              <div className="relative">
-                <Mail className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+              <label className="block text-xs font-semibold text-gray-700 uppercase mb-1.5 ml-1">Email Address</label>
+              <div className="relative group">
+                <Mail className="w-5 h-5 absolute left-3 top-3.5 text-gray-400 group-focus-within:text-indigo-600 transition-colors" />
                 <input 
                   type="email" 
                   required 
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-gray-50 focus:bg-white"
                   placeholder="name@company.com"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
@@ -311,13 +314,13 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login' }: AuthPageP
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Password</label>
-              <div className="relative">
-                <Lock className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+              <label className="block text-xs font-semibold text-gray-700 uppercase mb-1.5 ml-1">Password</label>
+              <div className="relative group">
+                <Lock className="w-5 h-5 absolute left-3 top-3.5 text-gray-400 group-focus-within:text-indigo-600 transition-colors" />
                 <input 
                   type="password" 
                   required 
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-gray-50 focus:bg-white"
                   placeholder="••••••••"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
@@ -326,11 +329,11 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login' }: AuthPageP
             </div>
 
             {view === 'login' && (
-                <div className="flex justify-end">
+                <div className="flex justify-end -mt-1">
                     <button 
                         type="button"
                         onClick={() => setView('forgot')}
-                        className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+                        className="text-xs text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
                     >
                         Forgot Password?
                     </button>
@@ -340,9 +343,9 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login' }: AuthPageP
             <button 
               type="submit" 
               disabled={loading}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-lg transition-all shadow-md hover:shadow-lg mt-6 flex items-center justify-center gap-2"
+              className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3 rounded-lg transition-all shadow-lg hover:shadow-xl mt-8 flex items-center justify-center gap-2 transform active:scale-[0.98]"
             >
-              {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+              {loading && <Loader2 className="w-5 h-5 animate-spin" />}
               {view === 'login' ? 'Sign In' : 'Create Account'}
             </button>
         </form>
@@ -350,45 +353,102 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login' }: AuthPageP
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-800 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden relative">
-        <div className="p-8">
-          <div className="text-center mb-6">
-            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">ETL Fixer AI</h1>
-            <p className="text-gray-500 mt-2">
-                {view === 'login' && 'Welcome back, Developer'}
-                {view === 'register' && 'Create your account'}
-                {view === 'verify' && 'Verify your email'}
-                {view === 'forgot' && 'Reset your password'}
-            </p>
+    <div className="min-h-screen flex bg-gray-50">
+      {/* LEFT SIDE - BRANDING */}
+      <div className="hidden lg:flex lg:w-1/2 bg-slate-900 relative overflow-hidden flex-col justify-between p-12 text-white">
+          <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
+             <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-500 blur-[120px]"></div>
+             <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-purple-500 blur-[120px]"></div>
+          </div>
+          
+          <div className="relative z-10">
+              <div className="flex items-center gap-3 mb-8">
+                  <div className="bg-indigo-600 p-2 rounded-lg">
+                      <Shield className="w-6 h-6 text-white" />
+                  </div>
+                  <span className="font-bold text-2xl tracking-tight">ETL Remedy</span>
+              </div>
+              
+              <h1 className="text-5xl font-extrabold leading-tight mb-6">
+                  Intelligent Error <br/> 
+                  <span className="text-indigo-400">Resolution Platform</span>
+              </h1>
+              <p className="text-slate-400 text-lg max-w-md leading-relaxed">
+                  Automate your ETL debugging process. Detect errors, identify root causes, and get instant fix suggestions powered by advanced AI.
+              </p>
           </div>
 
-          {msg && (
-            <div className={`mb-6 p-4 rounded-lg text-sm flex items-start gap-2 ${msg.type === 'error' ? 'bg-red-50 text-red-700 border border-red-100' : 'bg-green-50 text-green-700 border border-green-100'}`}>
-              {msg.type === 'success' ? <CheckCircle className="w-4 h-4 mt-0.5 shrink-0" /> : <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />}
-              <span className="font-medium">{msg.text}</span>
-            </div>
-          )}
+          <div className="relative z-10 grid grid-cols-1 gap-6">
+             <div className="flex items-start gap-4 p-4 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm">
+                 <div className="p-2 bg-indigo-500/20 rounded-lg text-indigo-300">
+                     <Zap className="w-5 h-5" />
+                 </div>
+                 <div>
+                     <h4 className="font-bold text-sm">Instant Analysis</h4>
+                     <p className="text-xs text-slate-400 mt-1">Reduce debugging time from hours to seconds.</p>
+                 </div>
+             </div>
+             <div className="flex items-start gap-4 p-4 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm">
+                 <div className="p-2 bg-green-500/20 rounded-lg text-green-300">
+                     <TrendingUp className="w-5 h-5" />
+                 </div>
+                 <div>
+                     <h4 className="font-bold text-sm">Optimization Tips</h4>
+                     <p className="text-xs text-slate-400 mt-1">Get performance improvement suggestions for every error.</p>
+                 </div>
+             </div>
+          </div>
+          
+          <div className="relative z-10 text-xs text-slate-500">
+              © {new Date().getFullYear()} ETL Remedy. Enterprise Grade Security.
+          </div>
+      </div>
 
-          {renderForm()}
-        </div>
-        
-        {view !== 'forgot' && view !== 'verify' && (
-            <div className="bg-gray-50 px-8 py-4 border-t border-gray-100 text-center">
-            <p className="text-sm text-gray-600">
-                {view === 'login' ? "Don't have an account?" : "Already have an account?"}
-                <button 
-                onClick={() => {
-                    setView(view === 'login' ? 'register' : 'login');
-                    setMsg(null);
-                }}
-                className="ml-2 text-indigo-600 font-semibold hover:underline"
-                >
-                {view === 'login' ? 'Register' : 'Log In'}
-                </button>
-            </p>
-            </div>
-        )}
+      {/* RIGHT SIDE - FORM */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 lg:p-12 relative">
+         <div className="max-w-md w-full bg-white lg:bg-transparent rounded-2xl lg:rounded-none shadow-2xl lg:shadow-none p-8 lg:p-0">
+             {/* Mobile Logo */}
+             <div className="lg:hidden flex items-center gap-2 mb-8 justify-center text-slate-900">
+                  <Shield className="w-8 h-8 text-indigo-600" />
+                  <span className="font-bold text-2xl">ETL Remedy</span>
+             </div>
+
+             <div className="mb-8">
+                 <h2 className="text-2xl font-bold text-gray-900">
+                     {view === 'login' ? 'Welcome back' : view === 'register' ? 'Get started' : view === 'verify' ? 'Verification' : 'Reset Password'}
+                 </h2>
+                 <p className="text-gray-500 mt-2 text-sm">
+                     {view === 'login' && 'Please enter your details to sign in.'}
+                     {view === 'register' && 'Create a new account to start analyzing logs.'}
+                 </p>
+             </div>
+
+             {msg && (
+                <div className={`mb-6 p-4 rounded-lg text-sm flex items-start gap-3 shadow-sm ${msg.type === 'error' ? 'bg-red-50 text-red-700 border border-red-100' : 'bg-green-50 text-green-700 border border-green-100'}`}>
+                {msg.type === 'success' ? <CheckCircle className="w-5 h-5 mt-0.5 shrink-0" /> : <AlertCircle className="w-5 h-5 mt-0.5 shrink-0" />}
+                <span className="font-medium leading-relaxed">{msg.text}</span>
+                </div>
+            )}
+
+            {renderForm()}
+
+            {view !== 'forgot' && view !== 'verify' && (
+                <div className="mt-8 pt-6 border-t border-gray-100 text-center">
+                    <p className="text-sm text-gray-500">
+                        {view === 'login' ? "Don't have an account?" : "Already have an account?"}
+                        <button 
+                        onClick={() => {
+                            setView(view === 'login' ? 'register' : 'login');
+                            setMsg(null);
+                        }}
+                        className="ml-2 text-indigo-600 font-bold hover:text-indigo-800 transition-colors"
+                        >
+                        {view === 'login' ? 'Sign up for free' : 'Log In'}
+                        </button>
+                    </p>
+                </div>
+            )}
+         </div>
       </div>
     </div>
   );
