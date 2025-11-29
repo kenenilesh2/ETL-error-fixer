@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabaseClient';
-import { Loader2, AlertCircle, User, Phone, Mail, Lock, ArrowLeft, CheckCircle } from 'lucide-react';
+import { Loader2, AlertCircle, User, Phone, Mail, Lock, ArrowLeft, CheckCircle, KeyRound, RefreshCw, Settings, Info } from 'lucide-react';
 
 interface AuthPageProps {
   onLogin: (user?: any) => void;
@@ -10,7 +10,7 @@ interface AuthPageProps {
 }
 
 export function AuthPage({ onLogin, demoMode, initialMode = 'login' }: AuthPageProps) {
-  const [view, setView] = useState<'login' | 'register' | 'forgot'>('login');
+  const [view, setView] = useState<'login' | 'register' | 'forgot' | 'verify'>('login');
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<{ type: 'error' | 'success', text: string } | null>(null);
 
@@ -18,6 +18,8 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login' }: AuthPageP
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [mobile, setMobile] = useState('');
+  const [otp, setOtp] = useState('');
+  const [resendTimer, setResendTimer] = useState(0);
   
   useEffect(() => {
       if (initialMode === 'login' || initialMode === 'register') {
@@ -25,47 +27,134 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login' }: AuthPageP
       }
   }, [initialMode]);
 
+  useEffect(() => {
+    let interval: any;
+    if (resendTimer > 0) {
+      interval = setInterval(() => setResendTimer(prev => prev - 1), 1000);
+    }
+    return () => clearInterval(interval);
+  }, [resendTimer]);
+
+  const handleResendOtp = async () => {
+      if (resendTimer > 0) return;
+      setLoading(true);
+      setMsg(null);
+      try {
+          const { error } = await supabase.auth.resend({
+              type: 'signup',
+              email: email.trim()
+          });
+          
+          if (error) {
+              if (error.message.includes("already registered") || error.message.includes("already confirmed")) {
+                  setMsg({ type: 'error', text: 'This email is already active. Please return to Login.' });
+              } else {
+                  throw error;
+              }
+          } else {
+              setMsg({ type: 'success', text: 'New code sent! Previous codes are now invalid.' });
+              setResendTimer(60); 
+          }
+      } catch (err: any) {
+          console.error("Resend Error:", err);
+          setMsg({ type: 'error', text: err.message });
+      } finally {
+          setLoading(false);
+      }
+  };
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setMsg(null);
 
+    const cleanEmail = email.trim();
+    const cleanPassword = password.trim();
+
     try {
         if (view === 'login') {
-            const { error } = await supabase.auth.signInWithPassword({
-              email,
-              password,
+            const { data, error } = await supabase.auth.signInWithPassword({
+              email: cleanEmail,
+              password: cleanPassword,
             });
             if (error) throw error;
+            // Login successful
         } else if (view === 'register') {
             const { data, error } = await supabase.auth.signUp({
-              email,
-              password,
+              email: cleanEmail,
+              password: cleanPassword,
               options: {
                 data: {
-                  first_name: firstName,
-                  mobile: mobile,
+                  first_name: firstName.trim(),
+                  mobile: mobile.trim(),
                 },
-                emailRedirectTo: window.location.origin
               }
             });
             if (error) throw error;
+
+            if (data.session) {
+                 setMsg({ type: 'success', text: 'Account already active. Logging you in...' });
+                 return;
+            }
             
-            setMsg({ type: 'success', text: 'Registration successful! Please check your email for the validation link.' });
-            setView('login');
+            if (data.user && data.user.identities && data.user.identities.length === 0) {
+                 setMsg({ type: 'error', text: 'This email is already registered. Please Log In instead.' });
+                 return;
+            }
+            
+            setMsg({ type: 'success', text: 'Registration successful! Enter the code sent to your email.' });
+            setView('verify');
+            setResendTimer(30);
+        } else if (view === 'verify') {
+            const cleanOtp = otp.trim();
+            
+            // 1. Attempt verification
+            const { data, error } = await supabase.auth.verifyOtp({
+                email: cleanEmail,
+                token: cleanOtp,
+                type: 'signup'
+            });
+            
+            if (error) {
+                console.warn("OTP Verification failed:", error.message);
+                
+                // 2. SMART FALLBACK: 
+                // If OTP failed (maybe expired or user clicked link?), try logging in with password.
+                // If they are already verified, this will succeed and solve the issue.
+                if (cleanPassword) {
+                    const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
+                        email: cleanEmail,
+                        password: cleanPassword
+                    });
+                    
+                    if (!loginError && loginData.session) {
+                        setMsg({ type: 'success', text: 'Verified successfully (via login). Redirecting...' });
+                        return; // Success!
+                    }
+                }
+
+                // If fallback failed, show meaningful error
+                if (error.message.includes("expired") || error.message.includes("invalid")) {
+                    throw new Error("Invalid or expired code. Did you request a new one? Only the latest code works.");
+                }
+                throw error;
+            }
+            
+            setMsg({ type: 'success', text: 'Email verified successfully! Logging you in...' });
         } else if (view === 'forgot') {
-            const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                redirectTo: window.location.origin + '#type=recovery'
+            const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
+                redirectTo: window.location.origin
             });
             if (error) throw error;
             setMsg({ type: 'success', text: 'Password reset link sent to your email.' });
-            // Don't switch view immediately so they see the message
         }
     } catch (err: any) {
       console.error("Auth Error:", err);
       let errorMessage = err.message || "An unexpected error occurred";
       if (err.message === "Invalid login credentials") {
           errorMessage = "Invalid email or password.";
+      } else if (err.message.includes("User already registered")) {
+          errorMessage = "User already registered. Please Log In.";
       }
       setMsg({ type: 'error', text: errorMessage });
     } finally {
@@ -74,9 +163,69 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login' }: AuthPageP
   };
 
   const renderForm = () => {
+      // --- VERIFY OTP VIEW ---
+      if (view === 'verify') {
+          return (
+              <div className="space-y-4 animate-fade-in">
+                  <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-lg mb-4">
+                      <p className="text-sm text-indigo-800 font-medium text-center">We sent a code to <br/><span className="font-bold">{email}</span></p>
+                      <p className="text-xs text-indigo-500 mt-1 text-center">Check your spam folder.</p>
+                  </div>
+                  
+                  <form onSubmit={handleAuth}>
+                    <div>
+                        <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Confirmation Code</label>
+                        <div className="relative">
+                            <KeyRound className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+                            <input 
+                            type="text" 
+                            required 
+                            maxLength={8}
+                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all tracking-[0.5em] font-mono text-center font-bold text-lg"
+                            placeholder="000000"
+                            value={otp}
+                            onChange={e => setOtp(e.target.value.replace(/[^0-9]/g, ''))}
+                            />
+                        </div>
+                        <p className="text-[10px] text-gray-400 mt-1 text-center">Enter the most recent code received.</p>
+                    </div>
+                    <button 
+                        type="submit" 
+                        disabled={loading || otp.length < 6}
+                        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-lg transition-all shadow-md hover:shadow-lg mt-6 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                        {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+                        Verify & Login
+                    </button>
+                   </form>
+
+                   <div className="flex flex-col gap-2 mt-4">
+                        <button 
+                            type="button"
+                            onClick={handleResendOtp}
+                            disabled={resendTimer > 0 || loading}
+                            className="w-full bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-medium py-2 rounded-lg transition-all text-xs flex items-center justify-center gap-2 disabled:opacity-50"
+                        >
+                            {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                            {resendTimer > 0 ? `Resend Code in ${resendTimer}s` : "Resend Code"}
+                        </button>
+                        
+                        <button 
+                            type="button"
+                            onClick={() => setView('register')}
+                            className="w-full text-gray-500 hover:text-gray-700 font-medium py-2 flex items-center justify-center gap-2 text-xs"
+                        >
+                            Incorrect email? Go back
+                        </button>
+                   </div>
+              </div>
+          );
+      }
+
+      // --- FORGOT PASSWORD VIEW ---
       if (view === 'forgot') {
           return (
-              <form onSubmit={handleAuth} className="space-y-4">
+              <form onSubmit={handleAuth} className="space-y-4 animate-fade-in">
                   <div>
                     <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Email Address</label>
                     <div className="relative">
@@ -110,8 +259,9 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login' }: AuthPageP
           );
       }
 
+      // --- LOGIN & REGISTER VIEW ---
       return (
-        <form onSubmit={handleAuth} className="space-y-4">
+        <form onSubmit={handleAuth} className="space-y-4 animate-fade-in">
             {view === 'register' && (
               <>
                  <div>
@@ -208,6 +358,7 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login' }: AuthPageP
             <p className="text-gray-500 mt-2">
                 {view === 'login' && 'Welcome back, Developer'}
                 {view === 'register' && 'Create your account'}
+                {view === 'verify' && 'Verify your email'}
                 {view === 'forgot' && 'Reset your password'}
             </p>
           </div>
@@ -222,7 +373,7 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login' }: AuthPageP
           {renderForm()}
         </div>
         
-        {view !== 'forgot' && (
+        {view !== 'forgot' && view !== 'verify' && (
             <div className="bg-gray-50 px-8 py-4 border-t border-gray-100 text-center">
             <p className="text-sm text-gray-600">
                 {view === 'login' ? "Don't have an account?" : "Already have an account?"}
