@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Upload, Search, Loader2, Database, AlertCircle, ArrowLeft, LogOut, Shield, X, CheckCircle, Terminal, Copy, Check } from 'lucide-react';
+import { Upload, Search, Loader2, Database, AlertCircle, ArrowLeft, LogOut, Shield, X, CheckCircle, Terminal, Copy, Check, Menu } from 'lucide-react';
 import { analyzeLog } from './services/geminiService';
 import { AnalysisResult, StoredError } from './types';
 import { AnalysisCard } from './components/AnalysisCard';
@@ -18,6 +18,7 @@ function App() {
   const [loadingSession, setLoadingSession] = useState(true);
   const [validationSuccess, setValidationSuccess] = useState(false);
   const [dbFetchError, setDbFetchError] = useState<string | null>(null);
+  const [recoveryMode, setRecoveryMode] = useState(false); // State for password reset flow
   
   // Delete Error State
   const [deleteError, setDeleteError] = useState(false);
@@ -34,6 +35,9 @@ function App() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Mobile Menu State
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   useEffect(() => {
     const initSession = async () => {
         // --- EMAIL VALIDATION CHECK ---
@@ -45,10 +49,13 @@ function App() {
             (urlSearch && urlSearch.includes('code='));
 
         if (isEmailConfirmation) {
-            console.log("Email verification detected.");
-            setValidationSuccess(true);
+            console.log("Email verification/recovery detected.");
+            // If it's a recovery flow, we'll let onAuthStateChange handle the mode switch
+            if (!urlHash.includes('type=recovery')) {
+                setValidationSuccess(true);
+                setTimeout(() => setValidationSuccess(false), 8000);
+            }
             window.history.replaceState(null, '', window.location.pathname);
-            setTimeout(() => setValidationSuccess(false), 8000);
         }
 
         try {
@@ -61,7 +68,11 @@ function App() {
                 await checkAdmin(data.session);
             }
             
-            const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+            const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+                if (event === 'PASSWORD_RECOVERY') {
+                    setRecoveryMode(true);
+                }
+                
                 setSession(session);
                 if (session) {
                     await syncUserProfile(session.user);
@@ -83,10 +94,10 @@ function App() {
 
   // --- HISTORY FETCHING SIDE EFFECT ---
   useEffect(() => {
-      if (session?.user) {
+      if (session?.user && !recoveryMode) {
           fetchHistory(session.user);
       }
-  }, [session]); 
+  }, [session, recoveryMode]); 
 
   // Sync profile logic to handle RLS safely after authentication
   const syncUserProfile = async (user: any) => {
@@ -174,6 +185,7 @@ function App() {
         setCurrentResult(null);
         setMode('upload');
         setInputText('');
+        setRecoveryMode(false);
     }
   }
 
@@ -265,6 +277,7 @@ function App() {
     setInputText("");
     setMode('manual');
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    setMobileMenuOpen(false); // Close menu on mobile select
   };
 
   const handleCopySqlFix = () => {
@@ -375,6 +388,17 @@ function App() {
       );
   }
 
+  // RECOVERY MODE CHECK: Show Update Password Screen
+  if (recoveryMode) {
+      return (
+          <AuthPage 
+              onLogin={() => setRecoveryMode(false)}
+              demoMode={false} 
+              initialMode="update_password" 
+          />
+      );
+  }
+
   if (!session) {
       return (
         <>
@@ -406,7 +430,7 @@ function App() {
                  <Shield className="w-6 h-6 text-indigo-600" /> ETL Remedy
               </h1>
               <div className="flex items-center gap-4">
-                  <div className="flex flex-col items-end mr-2">
+                  <div className="flex flex-col items-end mr-2 hidden md:flex">
                       <span className="text-sm font-semibold text-gray-700">{session.user.user_metadata?.first_name || 'Developer'}</span>
                       <span className="text-xs text-gray-400">{session.user.email}</span>
                   </div>
@@ -422,28 +446,28 @@ function App() {
 
           <div className="max-w-5xl w-full z-10 mt-10">
             <div className="text-center mb-12">
-              <h2 className="text-4xl font-extrabold text-gray-900 mb-4 tracking-tight">
+              <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4 tracking-tight">
                 Select your ETL Platform
               </h2>
-              <p className="text-lg text-gray-500 max-w-2xl mx-auto">
+              <p className="text-sm md:text-lg text-gray-500 max-w-2xl mx-auto px-4">
                 Our AI specializes in debugging logs from major enterprise integration tools. Choose your platform to start analyzing.
               </p>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
               {TOOLS.map((tool) => (
                 <button
                   key={tool.id}
                   onClick={() => handleToolSelect(tool.id)}
-                  className="group bg-white rounded-xl p-6 shadow-sm hover:shadow-xl border border-gray-200 hover:border-indigo-100 transition-all duration-300 flex flex-col items-center text-center transform hover:-translate-y-1"
+                  className="group bg-white rounded-xl p-4 md:p-6 shadow-sm hover:shadow-xl border border-gray-200 hover:border-indigo-100 transition-all duration-300 flex flex-col items-center text-center transform hover:-translate-y-1 active:scale-95"
                 >
-                  <div className="w-16 h-16 mb-4 flex items-center justify-center p-2 rounded-2xl bg-gray-50 group-hover:bg-white group-hover:scale-110 transition-transform duration-300">
+                  <div className="w-12 h-12 md:w-16 md:h-16 mb-4 flex items-center justify-center p-2 rounded-2xl bg-gray-50 group-hover:bg-white group-hover:scale-110 transition-transform duration-300">
                     <tool.icon className="w-full h-full" />
                   </div>
-                  <h3 className={`font-bold text-lg mb-1 group-hover:text-indigo-600 transition-colors`}>
+                  <h3 className={`font-bold text-sm md:text-lg mb-1 group-hover:text-indigo-600 transition-colors`}>
                     {tool.name}
                   </h3>
-                  <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">
+                  <p className="text-[10px] md:text-xs text-gray-400 font-medium uppercase tracking-wide">
                     {tool.description}
                   </p>
                 </button>
@@ -463,24 +487,34 @@ function App() {
         onClear={clearHistory}
         onDelete={deleteHistoryItem}
         selectedId={currentResult?.id}
+        isOpen={mobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
       />
       
       {deleteError && <SqlFixModal />}
       
       <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
-        <header className="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-6 shadow-sm shrink-0 z-10">
-          <div className="flex items-center gap-4">
+        <header className="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-4 md:px-6 shadow-sm shrink-0 z-10">
+          <div className="flex items-center gap-2 md:gap-4">
+             {/* Mobile Menu Toggle */}
+             <button 
+                onClick={() => setMobileMenuOpen(true)}
+                className="md:hidden p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-md"
+             >
+                <Menu className="w-5 h-5" />
+             </button>
+
              <button onClick={handleBackToHome} className="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition-colors">
                 <ArrowLeft className="w-5 h-5" />
              </button>
-             <div className="h-6 w-px bg-gray-300 mx-2"></div>
+             <div className="h-6 w-px bg-gray-300 mx-1 md:mx-2"></div>
              <div className="flex items-center gap-2">
                  {(() => {
                      const ToolIcon = TOOLS.find(t => t.id === selectedTool)?.icon || Database;
-                     return <ToolIcon className="w-6 h-6" />;
+                     return <ToolIcon className="w-5 h-5 md:w-6 md:h-6" />;
                  })()}
-                 <h1 className="text-lg font-bold text-gray-800">
-                    {TOOLS.find(t => t.id === selectedTool)?.name} <span className="text-gray-400 font-normal">Analyzer</span>
+                 <h1 className="text-base md:text-lg font-bold text-gray-800 truncate max-w-[150px] md:max-w-none">
+                    {TOOLS.find(t => t.id === selectedTool)?.name} <span className="text-gray-400 font-normal hidden sm:inline">Analyzer</span>
                  </h1>
              </div>
           </div>
@@ -494,8 +528,8 @@ function App() {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-6 scrollbar-thin">
-          <div className="max-w-4xl mx-auto space-y-8 pb-10">
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 scrollbar-thin">
+          <div className="max-w-4xl mx-auto space-y-6 md:space-y-8 pb-10">
             {dbFetchError && (
                  <div className="bg-red-50 border border-red-200 p-4 rounded-lg flex items-start gap-3">
                      <AlertCircle className="w-5 h-5 text-red-600 mt-0.5" />
@@ -512,20 +546,20 @@ function App() {
                         onClick={() => setMode('upload')}
                         className={`flex-1 py-3 text-sm font-semibold flex items-center justify-center gap-2 transition-colors ${mode === 'upload' ? 'text-indigo-600 bg-indigo-50/50' : 'text-gray-500 hover:text-gray-700'}`}
                     >
-                        <Upload className="w-4 h-4" /> Upload Log File
+                        <Upload className="w-4 h-4" /> <span className="hidden sm:inline">Upload Log File</span> <span className="sm:hidden">Upload</span>
                     </button>
                     <button 
                         onClick={() => setMode('manual')}
                         className={`flex-1 py-3 text-sm font-semibold flex items-center justify-center gap-2 transition-colors ${mode === 'manual' ? 'text-indigo-600 bg-indigo-50/50' : 'text-gray-500 hover:text-gray-700'}`}
                     >
-                        <Search className="w-4 h-4" /> Paste Error / Console
+                        <Search className="w-4 h-4" /> <span className="hidden sm:inline">Paste Error / Console</span> <span className="sm:hidden">Paste</span>
                     </button>
                 </div>
 
-                <div className="p-6">
+                <div className="p-4 md:p-6">
                     {mode === 'upload' ? (
                         <div 
-                            className="border-2 border-dashed border-gray-300 rounded-lg p-10 text-center hover:border-indigo-400 hover:bg-indigo-50/30 transition-all cursor-pointer group"
+                            className="border-2 border-dashed border-gray-300 rounded-lg p-6 md:p-10 text-center hover:border-indigo-400 hover:bg-indigo-50/30 transition-all cursor-pointer group"
                             onClick={() => fileInputRef.current?.click()}
                         >
                             <input type="file" ref={fileInputRef} className="hidden" accept=".log,.txt" onChange={handleFileUpload} />
@@ -533,7 +567,7 @@ function App() {
                                 <Upload className="w-6 h-6" />
                             </div>
                             <h3 className="text-gray-900 font-medium">Click to upload log file</h3>
-                            <p className="text-gray-500 text-sm mt-1">Supports .txt and .log files</p>
+                            <p className="text-gray-500 text-xs md:text-sm mt-1">Supports .txt and .log files</p>
                         </div>
                     ) : (
                         <div>
@@ -544,13 +578,13 @@ function App() {
                                 className="w-full h-40 p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none font-mono text-sm bg-gray-50 text-gray-800 resize-none"
                             />
                             <div className="flex justify-between items-center mt-4">
-                                <span className="text-xs text-gray-400">{inputText.length} characters</span>
+                                <span className="text-xs text-gray-400">{inputText.length} chars</span>
                                 <button
                                     onClick={processAnalysis}
                                     disabled={isAnalyzing || !inputText.trim()}
-                                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium shadow-md transition-all disabled:opacity-50 flex items-center gap-2"
+                                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 md:px-6 py-2 rounded-lg font-medium shadow-md transition-all disabled:opacity-50 flex items-center gap-2 text-sm"
                                 >
-                                    {isAnalyzing ? <><Loader2 className="w-4 h-4 animate-spin" /> Analyzing...</> : <><Search className="w-4 h-4" /> Analyze Error</>}
+                                    {isAnalyzing ? <><Loader2 className="w-4 h-4 animate-spin" /> Analyzing...</> : <><Search className="w-4 h-4" /> Analyze</>}
                                 </button>
                             </div>
                         </div>

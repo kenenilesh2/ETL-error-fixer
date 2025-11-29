@@ -6,11 +6,11 @@ import { Loader2, AlertCircle, User, Phone, Mail, Lock, ArrowLeft, CheckCircle, 
 interface AuthPageProps {
   onLogin: (user?: any) => void;
   demoMode: boolean;
-  initialMode?: 'login' | 'register';
+  initialMode?: 'login' | 'register' | 'update_password';
 }
 
 export function AuthPage({ onLogin, demoMode, initialMode = 'login' }: AuthPageProps) {
-  const [view, setView] = useState<'login' | 'register' | 'forgot' | 'verify'>('login');
+  const [view, setView] = useState<'login' | 'register' | 'forgot' | 'verify' | 'update_password' | 'verify_reset'>('login');
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<{ type: 'error' | 'success', text: string } | null>(null);
 
@@ -22,7 +22,7 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login' }: AuthPageP
   const [resendTimer, setResendTimer] = useState(0);
   
   useEffect(() => {
-      if (initialMode === 'login' || initialMode === 'register') {
+      if (initialMode) {
           setView(initialMode);
       }
   }, [initialMode]);
@@ -40,21 +40,28 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login' }: AuthPageP
       setLoading(true);
       setMsg(null);
       try {
-          const { error } = await supabase.auth.resend({
-              type: 'signup',
-              email: email.trim()
-          });
-          
-          if (error) {
-              if (error.message.includes("already registered") || error.message.includes("already confirmed")) {
-                  setMsg({ type: 'error', text: 'This email is already active. Please return to Login.' });
-              } else {
-                  throw error;
-              }
+          // If we are in verify_reset mode, we need to resend the recovery email, not signup
+          if (view === 'verify_reset') {
+             const { error } = await supabase.auth.resetPasswordForEmail(email.trim());
+             if (error) throw error;
+             setMsg({ type: 'success', text: 'Reset code resent. Check your email.' });
           } else {
-              setMsg({ type: 'success', text: 'New code sent! Previous codes are now invalid.' });
-              setResendTimer(60); 
+             // Default signup resend
+             const { error } = await supabase.auth.resend({
+                type: 'signup',
+                email: email.trim()
+             });
+             if (error) {
+                if (error.message.includes("already registered") || error.message.includes("already confirmed")) {
+                    setMsg({ type: 'error', text: 'This email is already active. Please return to Login.' });
+                } else {
+                    throw error;
+                }
+             } else {
+                setMsg({ type: 'success', text: 'New code sent! Previous codes are now invalid.' });
+             }
           }
+          setResendTimer(60); 
       } catch (err: any) {
           console.error("Resend Error:", err);
           setMsg({ type: 'error', text: err.message });
@@ -139,11 +146,42 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login' }: AuthPageP
             
             setMsg({ type: 'success', text: 'Email verified successfully! Logging you in...' });
         } else if (view === 'forgot') {
-            const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
-                redirectTo: window.location.origin
-            });
+            const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail);
             if (error) throw error;
-            setMsg({ type: 'success', text: 'Password reset link sent to your email.' });
+            setMsg({ type: 'success', text: 'Reset code sent! Check your email.' });
+            setView('verify_reset');
+            setResendTimer(60);
+        } else if (view === 'verify_reset') {
+             const cleanOtp = otp.trim();
+             
+             // 1. Verify Recovery Token
+             const { data, error } = await supabase.auth.verifyOtp({
+                 email: cleanEmail,
+                 token: cleanOtp,
+                 type: 'recovery'
+             });
+
+             if (error) throw error;
+
+             // 2. Update Password immediately after verification
+             const { error: updateError } = await supabase.auth.updateUser({
+                 password: cleanPassword
+             });
+
+             if (updateError) throw updateError;
+
+             setMsg({ type: 'success', text: 'Password reset successful! Logging you in...' });
+             setTimeout(() => {
+                 onLogin(data.session?.user);
+             }, 1500);
+
+        } else if (view === 'update_password') {
+            const { error } = await supabase.auth.updateUser({ password: cleanPassword });
+            if (error) throw error;
+            setMsg({ type: 'success', text: 'Password updated successfully! Redirecting...' });
+            setTimeout(() => {
+                onLogin(); // Signal completion to parent
+            }, 1500);
         }
     } catch (err: any) {
       console.error("Auth Error:", err);
@@ -160,7 +198,124 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login' }: AuthPageP
   };
 
   const renderForm = () => {
-      // --- VERIFY OTP VIEW ---
+      // --- UPDATE PASSWORD VIEW (Used via Link) ---
+      if (view === 'update_password') {
+          return (
+              <form onSubmit={handleAuth} className="space-y-5 animate-fade-in mt-6">
+                  <div className="text-center mb-8">
+                      <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mx-auto text-indigo-600 mb-4">
+                          <Lock className="w-6 h-6" />
+                      </div>
+                      <h3 className="text-xl font-bold text-gray-900">Set New Password</h3>
+                      <p className="text-sm text-gray-500 mt-2">Please enter your new password below</p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 uppercase mb-1.5 ml-1">New Password</label>
+                    <div className="relative group">
+                        <Lock className="w-5 h-5 absolute left-3 top-3.5 text-gray-400 group-focus-within:text-indigo-600 transition-colors" />
+                        <input 
+                        type="password" 
+                        required 
+                        minLength={6}
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-gray-50 focus:bg-white"
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={e => setPassword(e.target.value)}
+                        />
+                    </div>
+                    <p className="text-xs text-gray-400 mt-1 ml-1">Must be at least 6 characters</p>
+                   </div>
+                   <button 
+                    type="submit" 
+                    disabled={loading}
+                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg transition-all shadow-lg hover:shadow-xl mt-6 flex items-center justify-center gap-2"
+                    >
+                    {loading && <Loader2 className="w-5 h-5 animate-spin" />}
+                    Update Password
+                    </button>
+              </form>
+          );
+      }
+
+      // --- VERIFY RECOVERY (RESET PASSWORD) VIEW ---
+      if (view === 'verify_reset') {
+        return (
+            <div className="space-y-6 animate-fade-in">
+                <div className="text-center space-y-2 mb-8">
+                    <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mx-auto text-indigo-600 mb-4">
+                        <KeyRound className="w-6 h-6" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-900">Reset Password</h3>
+                    <p className="text-gray-500 text-sm">Enter the code sent to <span className="font-semibold text-gray-800">{email}</span> and your new password.</p>
+                </div>
+                
+                <form onSubmit={handleAuth} className="space-y-5">
+                  <div>
+                      <label className="block text-xs font-semibold text-gray-700 uppercase mb-1.5 ml-1">Recovery Code</label>
+                      <div className="relative">
+                          <KeyRound className="w-5 h-5 absolute left-3 top-3.5 text-gray-400" />
+                          <input 
+                          type="text" 
+                          required 
+                          maxLength={8}
+                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all tracking-[0.5em] font-mono text-center font-bold text-lg text-gray-800"
+                          placeholder="000000"
+                          value={otp}
+                          onChange={e => setOtp(e.target.value.replace(/[^0-9]/g, ''))}
+                          />
+                      </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 uppercase mb-1.5 ml-1">New Password</label>
+                    <div className="relative group">
+                        <Lock className="w-5 h-5 absolute left-3 top-3.5 text-gray-400 group-focus-within:text-indigo-600 transition-colors" />
+                        <input 
+                        type="password" 
+                        required 
+                        minLength={6}
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-gray-50 focus:bg-white"
+                        placeholder="New Password"
+                        value={password}
+                        onChange={e => setPassword(e.target.value)}
+                        />
+                    </div>
+                   </div>
+
+                  <button 
+                      type="submit" 
+                      disabled={loading || otp.length < 6 || password.length < 6}
+                      className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3 rounded-lg transition-all shadow-lg hover:shadow-xl mt-6 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                      {loading && <Loader2 className="w-5 h-5 animate-spin" />}
+                      Reset Password
+                  </button>
+                 </form>
+
+                 <div className="flex flex-col gap-3 mt-4">
+                      <button 
+                          type="button"
+                          onClick={handleResendOtp}
+                          disabled={resendTimer > 0 || loading}
+                          className="w-full bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-medium py-2.5 rounded-lg transition-all text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+                      >
+                          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                          {resendTimer > 0 ? `Resend Code in ${resendTimer}s` : "Resend Code"}
+                      </button>
+                      
+                      <button 
+                          type="button"
+                          onClick={() => setView('login')}
+                          className="w-full text-gray-500 hover:text-gray-700 font-medium py-2 flex items-center justify-center gap-2 text-sm"
+                      >
+                          Cancel
+                      </button>
+                 </div>
+            </div>
+        );
+      }
+
+      // --- VERIFY OTP VIEW (SIGNUP) ---
       if (view === 'verify') {
           return (
               <div className="space-y-6 animate-fade-in">
@@ -221,13 +376,13 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login' }: AuthPageP
           );
       }
 
-      // --- FORGOT PASSWORD VIEW ---
+      // --- FORGOT PASSWORD VIEW (Request) ---
       if (view === 'forgot') {
           return (
               <form onSubmit={handleAuth} className="space-y-5 animate-fade-in mt-6">
                   <div className="text-center mb-8">
                       <h3 className="text-xl font-bold text-gray-900">Reset Password</h3>
-                      <p className="text-sm text-gray-500 mt-2">Enter your email to receive reset instructions</p>
+                      <p className="text-sm text-gray-500 mt-2">Enter your email to receive a recovery code</p>
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-gray-700 uppercase mb-1.5 ml-1">Email Address</label>
@@ -249,7 +404,7 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login' }: AuthPageP
                     className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg transition-all shadow-lg hover:shadow-xl mt-6 flex items-center justify-center gap-2"
                     >
                     {loading && <Loader2 className="w-5 h-5 animate-spin" />}
-                    Send Reset Link
+                    Send Recovery Code
                     </button>
                     <button 
                         type="button"
@@ -415,11 +570,13 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login' }: AuthPageP
 
              <div className="mb-8">
                  <h2 className="text-2xl font-bold text-gray-900">
-                     {view === 'login' ? 'Welcome back' : view === 'register' ? 'Get started' : view === 'verify' ? 'Verification' : 'Reset Password'}
+                     {view === 'login' ? 'Welcome back' : view === 'register' ? 'Get started' : view === 'verify' ? 'Verification' : view === 'update_password' ? 'Security' : view === 'verify_reset' ? 'Password Recovery' : 'Reset Password'}
                  </h2>
                  <p className="text-gray-500 mt-2 text-sm">
                      {view === 'login' && 'Please enter your details to sign in.'}
                      {view === 'register' && 'Create a new account to start analyzing logs.'}
+                     {view === 'update_password' && 'Enter your new secure password.'}
+                     {view === 'verify_reset' && 'Secure your account with a new password.'}
                  </p>
              </div>
 
@@ -432,7 +589,7 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login' }: AuthPageP
 
             {renderForm()}
 
-            {view !== 'forgot' && view !== 'verify' && (
+            {view !== 'forgot' && view !== 'verify' && view !== 'update_password' && view !== 'verify_reset' && (
                 <div className="mt-8 pt-6 border-t border-gray-100 text-center">
                     <p className="text-sm text-gray-500">
                         {view === 'login' ? "Don't have an account?" : "Already have an account?"}
