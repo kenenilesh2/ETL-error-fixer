@@ -294,7 +294,7 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login', setManualRe
                         type="password" 
                         required 
                         minLength={6}
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-gray-50 focus:bg-white"
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-gray-50 focus:bg-white text-base"
                         placeholder="••••••••"
                         value={password}
                         onChange={e => setPassword(e.target.value)}
@@ -305,7 +305,7 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login', setManualRe
                    <button 
                     type="submit" 
                     disabled={loading}
-                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg transition-all shadow-lg hover:shadow-xl mt-6 flex items-center justify-center gap-2"
+                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3.5 rounded-lg transition-all shadow-lg hover:shadow-xl mt-6 flex items-center justify-center gap-2 active:scale-95"
                     >
                     {loading && <Loader2 className="w-5 h-5 animate-spin" />}
                     Update Password
@@ -334,7 +334,7 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login', setManualRe
                           type="text" 
                           required 
                           maxLength={8}
-                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all tracking-[0.5em] font-mono text-center font-bold text-lg text-gray-800"
+                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all tracking-[0.5em] font-mono text-center font-bold text-lg text-gray-800 text-base"
                           placeholder="000000"
                           value={otp}
                           onChange={e => setOtp(e.target.value.replace(/[^0-9]/g, ''))}
@@ -345,7 +345,7 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login', setManualRe
                   <button 
                       type="submit" 
                       disabled={loading || otp.length < 6}
-                      className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3 rounded-lg transition-all shadow-lg hover:shadow-xl mt-6 flex items-center justify-center gap-2 disabled:opacity-50"
+                      className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3.5 rounded-lg transition-all shadow-lg hover:shadow-xl mt-6 flex items-center justify-center gap-2 disabled:opacity-50 active:scale-95"
                       >
                       {loading && <Loader2 className="w-5 h-5 animate-spin" />}
                       Verify Code
@@ -357,7 +357,7 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login', setManualRe
                           type="button"
                           onClick={handleResendOtp}
                           disabled={resendTimer > 0 || loading}
-                          className="w-full bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-medium py-2.5 rounded-lg transition-all text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+                          className="w-full bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-medium py-3 rounded-lg transition-all text-sm flex items-center justify-center gap-2 disabled:opacity-50 active:scale-95"
                       >
                           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
                           {resendTimer > 0 ? `Resend Code in ${resendTimer}s` : "Resend Code"}
@@ -366,7 +366,7 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login', setManualRe
                       <button 
                           type="button"
                           onClick={() => setView('forgot')}
-                          className="w-full text-gray-500 hover:text-gray-700 font-medium py-2 flex items-center justify-center gap-2 text-sm"
+                          className="w-full text-gray-500 hover:text-gray-700 font-medium py-3 flex items-center justify-center gap-2 text-sm active:scale-95"
                       >
                           Incorrect email? Go back
                       </button>
@@ -395,7 +395,7 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login', setManualRe
                             type="text" 
                             required 
                             maxLength={8}
-                            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all tracking-[0.5em] font-mono text-center font-bold text-xl text-gray-800"
+                            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all tracking-[0.5em] font-mono text-center font-bold text-xl text-gray-800 text-base"
                             placeholder="000000"
                             value={otp}
                             onChange={e => setOtp(e.target.value.replace(/[^0-9]/g, ''))}
@@ -405,19 +405,19 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login', setManualRe
                     <button 
                         type="submit" 
                         disabled={loading || otp.length < 6}
-                        className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3 rounded-lg transition-all shadow-lg hover:shadow-xl mt-6 flex items-center justify-center gap-2 disabled:opacity-50"
+                        className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3.5 rounded-lg transition-all shadow-lg hover:shadow-xl mt-6 flex items-center justify-center gap-2 disabled:opacity-50 active:scale-95"
                         >
                         {loading && <Loader2 className="w-5 h-5 animate-spin" />}
                         Verify & Access
                     </button>
                    </form>
 
-                   <div className="flex flex-col gap-6 mt-6">
+                   <div className="flex flex-col gap-4 mt-6">
                         <button 
                             type="button"
                             onClick={handleResendOtp}
                             disabled={resendTimer > 0 || loading}
-                            className="w-full bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-medium py-2.5 rounded-lg transition-all text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+                            className="w-full bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-medium py-3 rounded-lg transition-all text-sm flex items-center justify-center gap-2 disabled:opacity-50 active:scale-95"
                         >
                             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
                             {resendTimer > 0 ? `Resend Code in ${resendTimer}s` : "Resend Code"}
@@ -426,7 +426,7 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login', setManualRe
                         <button 
                             type="button"
                             onClick={() => setView('register')}
-                            className="w-full text-gray-500 hover:text-gray-700 font-medium py-2 flex items-center justify-center gap-2 text-sm"
+                            className="w-full text-gray-500 hover:text-gray-700 font-medium py-3 flex items-center justify-center gap-2 text-sm active:scale-95"
                         >
                             Go back
                         </button>
@@ -450,7 +450,7 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login', setManualRe
                         <input 
                         type="email" 
                         required 
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-gray-50 focus:bg-white"
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-gray-50 focus:bg-white text-base"
                         placeholder="name@company.com"
                         value={email}
                         onChange={e => setEmail(e.target.value)}
@@ -460,7 +460,7 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login', setManualRe
                    <button 
                     type="submit" 
                     disabled={loading}
-                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg transition-all shadow-lg hover:shadow-xl mt-6 flex items-center justify-center gap-2"
+                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3.5 rounded-lg transition-all shadow-lg hover:shadow-xl mt-6 flex items-center justify-center gap-2 active:scale-95"
                     >
                     {loading && <Loader2 className="w-5 h-5 animate-spin" />}
                     Send Recovery Code
@@ -468,7 +468,7 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login', setManualRe
                     <button 
                         type="button"
                         onClick={() => setView('login')}
-                        className="w-full text-gray-500 hover:text-gray-800 font-medium py-2 flex items-center justify-center gap-2 mt-4"
+                        className="w-full text-gray-500 hover:text-gray-800 font-medium py-3 flex items-center justify-center gap-2 mt-4 active:scale-95"
                     >
                         <ArrowLeft className="w-4 h-4" /> Back to Login
                     </button>
@@ -506,7 +506,7 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login', setManualRe
                         <input 
                             type="text" 
                             required 
-                            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-gray-50 focus:bg-white"
+                            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-gray-50 focus:bg-white text-base"
                             placeholder="John"
                             value={firstName}
                             onChange={e => setFirstName(e.target.value)}
@@ -520,7 +520,7 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login', setManualRe
                         <input 
                             type="tel" 
                             required 
-                            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-gray-50 focus:bg-white"
+                            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-gray-50 focus:bg-white text-base"
                             placeholder="+1 234..."
                             value={mobile}
                             onChange={e => setMobile(e.target.value)}
@@ -537,7 +537,7 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login', setManualRe
                 <input 
                   type="email" 
                   required 
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-gray-50 focus:bg-white"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-gray-50 focus:bg-white text-base"
                   placeholder="name@company.com"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
@@ -552,7 +552,7 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login', setManualRe
                 <input 
                   type="password" 
                   required 
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-gray-50 focus:bg-white"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-gray-50 focus:bg-white text-base"
                   placeholder="••••••••"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
@@ -575,7 +575,7 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login', setManualRe
             <button 
               type="submit" 
               disabled={loading}
-              className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3 rounded-lg transition-all shadow-lg hover:shadow-xl mt-8 flex items-center justify-center gap-2 transform active:scale-[0.98]"
+              className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3.5 rounded-lg transition-all shadow-lg hover:shadow-xl mt-8 flex items-center justify-center gap-2 transform active:scale-[0.98]"
             >
               {loading && <Loader2 className="w-5 h-5 animate-spin" />}
               {view === 'login' ? 'Sign In' : 'Create Account'}
@@ -585,7 +585,7 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login', setManualRe
   }
 
   return (
-    <div className="min-h-screen flex bg-gray-50">
+    <div className="min-h-screen flex bg-slate-50 lg:bg-white transition-colors duration-500">
       {/* LEFT SIDE - BRANDING */}
       <div className="hidden lg:flex lg:w-1/2 bg-slate-900 relative overflow-hidden flex-col justify-between p-12 text-white">
           <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
@@ -637,57 +637,78 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login', setManualRe
       </div>
 
       {/* RIGHT SIDE - FORM */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 lg:p-12 relative">
-         <div className="max-w-md w-full bg-white lg:bg-transparent rounded-2xl lg:rounded-none shadow-2xl lg:shadow-none p-8 lg:p-0">
-             {/* Mobile Logo */}
-             <div className="lg:hidden flex items-center gap-2 mb-8 justify-center text-slate-900">
-                  <Shield className="w-8 h-8 text-indigo-600" />
-                  <span className="font-bold text-2xl">ETL Remedy</span>
+      <div className="w-full lg:w-1/2 flex items-center justify-center relative bg-slate-50 lg:bg-white p-0 lg:p-12">
+         {/* Mobile Header Bar */}
+         <div className="absolute top-0 left-0 right-0 h-48 bg-gradient-to-br from-slate-900 to-indigo-900 lg:hidden rounded-b-[2.5rem] shadow-xl overflow-hidden">
+             <div className="absolute inset-0 opacity-20">
+                 <div className="absolute top-[-20%] right-[-10%] w-[200px] h-[200px] bg-white rounded-full blur-[60px]"></div>
              </div>
-
-             <div className="mb-8">
-                 <h2 className="text-2xl font-bold text-gray-900">
-                     {view === 'login' ? 'Welcome back' : 
-                      view === 'register' ? 'Get started' : 
-                      view === 'verify' || view === 'verify_recovery' ? 'Verification' : 
-                      view === 'reset_password' || view === 'update_password' ? 'Set New Password' : 
-                      'Reset Password'}
-                 </h2>
-                 <p className="text-gray-500 mt-2 text-sm">
-                     {view === 'login' && 'Please enter your details to sign in.'}
-                     {view === 'register' && 'Create a new account to start analyzing logs.'}
-                     {view === 'verify' && 'Check your email for the signup code.'}
-                     {view === 'verify_recovery' && 'Check your email for the recovery code.'}
-                     {(view === 'reset_password' || view === 'update_password') && 'Create a strong password to secure your account.'}
-                     {view === 'forgot' && 'We will check if you are registered first.'}
-                 </p>
+             <div className="h-full flex flex-col items-center justify-center pb-8 text-white">
+                 <div className="bg-white/10 p-3 rounded-2xl mb-2 backdrop-blur-sm border border-white/10">
+                     <Shield className="w-8 h-8 text-white" />
+                 </div>
+                 <h1 className="font-bold text-2xl tracking-tight">ETL Remedy</h1>
+                 <p className="text-[10px] text-indigo-200 font-medium uppercase tracking-widest mt-1">Enterprise Log Analysis</p>
              </div>
+         </div>
 
-             {msg && (
-                <div className={`mb-6 p-4 rounded-lg text-sm flex items-start gap-3 shadow-sm ${msg.type === 'error' ? 'bg-red-50 text-red-700 border border-red-100' : 'bg-green-50 text-green-700 border border-green-100'}`}>
-                {msg.type === 'success' ? <CheckCircle className="w-5 h-5 mt-0.5 shrink-0" /> : <AlertCircle className="w-5 h-5 mt-0.5 shrink-0" />}
-                <span className="font-medium leading-relaxed">{msg.text}</span>
-                </div>
-            )}
+         <div className="w-full max-w-md px-4 sm:px-6 relative z-10 mt-20 lg:mt-0">
+             <div className="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-gray-100 lg:border-none lg:shadow-none p-6 sm:p-8 lg:p-0">
+                 <div className="mb-8 hidden lg:block">
+                     <h2 className="text-3xl font-bold text-gray-900">
+                         {view === 'login' ? 'Welcome back' : 
+                          view === 'register' ? 'Get started' : 
+                          view === 'verify' || view === 'verify_recovery' ? 'Verification' : 
+                          view === 'reset_password' || view === 'update_password' ? 'Set New Password' : 
+                          'Reset Password'}
+                     </h2>
+                     <p className="text-gray-500 mt-2">
+                         {view === 'login' && 'Please enter your details to sign in.'}
+                         {view === 'register' && 'Create a new account to start analyzing logs.'}
+                         {view === 'verify' && 'Check your email for the signup code.'}
+                         {view === 'verify_recovery' && 'Check your email for the recovery code.'}
+                         {(view === 'reset_password' || view === 'update_password') && 'Create a strong password to secure your account.'}
+                         {view === 'forgot' && 'We will check if you are registered first.'}
+                     </p>
+                 </div>
+                 
+                 {/* Mobile Heading (Simplified) */}
+                 <div className="mb-6 lg:hidden text-center">
+                      <h2 className="text-xl font-bold text-gray-900">
+                          {view === 'login' ? 'Sign In' : 
+                          view === 'register' ? 'Create Account' : 
+                          view === 'verify' || view === 'verify_recovery' ? 'Enter Code' : 
+                          view === 'reset_password' ? 'New Password' : 
+                          'Reset Password'}
+                      </h2>
+                 </div>
 
-            {renderForm()}
+                 {msg && (
+                    <div className={`mb-6 p-4 rounded-lg text-sm flex items-start gap-3 shadow-sm ${msg.type === 'error' ? 'bg-red-50 text-red-700 border border-red-100' : 'bg-green-50 text-green-700 border border-green-100'}`}>
+                    {msg.type === 'success' ? <CheckCircle className="w-5 h-5 mt-0.5 shrink-0" /> : <AlertCircle className="w-5 h-5 mt-0.5 shrink-0" />}
+                    <span className="font-medium leading-relaxed">{msg.text}</span>
+                    </div>
+                )}
 
-            {view !== 'forgot' && view !== 'verify' && view !== 'verify_recovery' && view !== 'reset_password' && view !== 'update_password' && (
-                <div className="mt-8 pt-6 border-t border-gray-100 text-center">
-                    <p className="text-sm text-gray-500">
-                        {view === 'login' ? "Don't have an account?" : "Already have an account?"}
-                        <button 
-                        onClick={() => {
-                            setView(view === 'login' ? 'register' : 'login');
-                            setMsg(null);
-                        }}
-                        className="ml-2 text-indigo-600 font-bold hover:text-indigo-800 transition-colors"
-                        >
-                        {view === 'login' ? 'Sign up for free' : 'Log In'}
-                        </button>
-                    </p>
-                </div>
-            )}
+                {renderForm()}
+
+                {view !== 'forgot' && view !== 'verify' && view !== 'verify_recovery' && view !== 'reset_password' && view !== 'update_password' && (
+                    <div className="mt-8 pt-6 border-t border-gray-100 text-center">
+                        <p className="text-sm text-gray-500">
+                            {view === 'login' ? "Don't have an account?" : "Already have an account?"}
+                            <button 
+                            onClick={() => {
+                                setView(view === 'login' ? 'register' : 'login');
+                                setMsg(null);
+                            }}
+                            className="ml-2 text-indigo-600 font-bold hover:text-indigo-800 transition-colors p-2 lg:p-0"
+                            >
+                            {view === 'login' ? 'Sign up for free' : 'Log In'}
+                            </button>
+                        </p>
+                    </div>
+                )}
+             </div>
          </div>
       </div>
     </div>
