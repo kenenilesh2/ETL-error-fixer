@@ -1,0 +1,5 @@
+{
+  "name": "ETL Fixer AI",
+  "description": "Intelligent ETL log analyzer for Talend, Informatica, SSIS, and more. Detects errors, components, and suggests code fixes using Gemini AI.",
+  "requestFramePermissions": []
+}
