@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Upload, Search, Loader2, Database, AlertCircle, ArrowLeft, LogOut, Shield, X, CheckCircle } from 'lucide-react';
+import { Upload, Search, Loader2, Database, AlertCircle, ArrowLeft, LogOut, Shield, X, CheckCircle, Terminal, Copy, Check } from 'lucide-react';
 import { analyzeLog } from './services/geminiService';
 import { AnalysisResult, StoredError } from './types';
 import { AnalysisCard } from './components/AnalysisCard';
@@ -18,6 +18,10 @@ function App() {
   const [loadingSession, setLoadingSession] = useState(true);
   const [validationSuccess, setValidationSuccess] = useState(false);
   const [dbFetchError, setDbFetchError] = useState<string | null>(null);
+  
+  // Delete Error State
+  const [deleteError, setDeleteError] = useState(false);
+  const [copiedSql, setCopiedSql] = useState(false);
 
   // ETL App State
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
@@ -263,14 +267,48 @@ function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const clearHistory = async () => {
-      if(confirm("Are you sure you want to clear your history? This cannot be undone.")) {
-          const { error } = await supabase.from('error_history').delete().eq('user_id', session.user.id);
-          if (!error) {
-              setHistory([]);
-              setCurrentResult(null);
+  const handleCopySqlFix = () => {
+      navigator.clipboard.writeText(`create policy "Users can delete own history" on public.error_history for delete using (auth.uid() = user_id);`);
+      setCopiedSql(true);
+      setTimeout(() => setCopiedSql(false), 2000);
+  };
+
+  const deleteHistoryItem = async (id: string) => {
+      if(!confirm("Delete this analysis?")) return;
+      
+      setDeleteError(false);
+      try {
+          const { error } = await supabase.from('error_history').delete().eq('id', id);
+          if (error) {
+              console.error("Delete failed:", error);
+              setDeleteError(true);
           } else {
-              alert("Failed to clear history from database.");
+              setHistory(history.filter(h => h.id !== id));
+              if (currentResult?.id === id) {
+                  setCurrentResult(null);
+              }
+          }
+      } catch (e) {
+          console.error("Delete exception:", e);
+          setDeleteError(true);
+      }
+  };
+
+  const clearHistory = async () => {
+      if(confirm("Are you sure you want to clear your ENTIRE history? This cannot be undone.")) {
+          setDeleteError(false);
+          try {
+              const { error } = await supabase.from('error_history').delete().eq('user_id', session.user.id);
+              if (!error) {
+                  setHistory([]);
+                  setCurrentResult(null);
+              } else {
+                  console.error("Clear history failed:", error);
+                  setDeleteError(true);
+              }
+          } catch (e) {
+              console.error("Clear history exception:", e);
+              setDeleteError(true);
           }
       }
   }
@@ -287,6 +325,45 @@ function App() {
           <button onClick={onClose} className="ml-2 text-gray-400 hover:text-gray-600 transition-colors p-1 hover:bg-gray-100 rounded-full">
               <X className="w-5 h-5" />
           </button>
+      </div>
+  );
+
+  const SqlFixModal = () => (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-200">
+              <div className="bg-red-50 p-4 border-b border-red-100 flex items-center gap-3">
+                  <AlertCircle className="w-6 h-6 text-red-600" />
+                  <h3 className="font-bold text-red-900">Permission Denied</h3>
+                  <button onClick={() => setDeleteError(false)} className="ml-auto text-red-400 hover:text-red-700">
+                      <X className="w-5 h-5" />
+                  </button>
+              </div>
+              <div className="p-6">
+                  <p className="text-gray-600 text-sm mb-4">
+                      Supabase blocked the delete request. You need to enable a "DELETE" policy in your database.
+                  </p>
+                  <div className="bg-slate-900 rounded-lg p-3 border border-slate-700 shadow-inner">
+                    <div className="flex justify-between items-center mb-2">
+                        <span className="text-[10px] text-gray-400 uppercase font-bold tracking-wider flex items-center gap-1">
+                            <Terminal className="w-3 h-3" /> SQL Fix
+                        </span>
+                        <button 
+                            onClick={handleCopySqlFix}
+                            className="text-xs flex items-center gap-1 text-indigo-400 hover:text-indigo-300 font-medium transition-colors"
+                        >
+                            {copiedSql ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                            {copiedSql ? 'Copied' : 'Copy SQL'}
+                        </button>
+                    </div>
+                    <pre className="text-xs text-green-400 font-mono overflow-x-auto whitespace-pre-wrap">
+                        {`create policy "Users can delete own history" on public.error_history for delete using (auth.uid() = user_id);`}
+                    </pre>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-4">
+                      Run this in your Supabase SQL Editor to enable deletion.
+                  </p>
+              </div>
+          </div>
       </div>
   );
 
@@ -384,8 +461,11 @@ function App() {
         history={history} 
         onSelect={handleHistorySelect} 
         onClear={clearHistory}
+        onDelete={deleteHistoryItem}
         selectedId={currentResult?.id}
       />
+      
+      {deleteError && <SqlFixModal />}
       
       <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
         <header className="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-6 shadow-sm shrink-0 z-10">
