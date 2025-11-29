@@ -1,18 +1,30 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabaseClient';
-import { Loader2, AlertCircle, User, Phone, Mail, Lock, ArrowLeft, CheckCircle, KeyRound, RefreshCw, Shield, Zap, TrendingUp, Check } from 'lucide-react';
+import { Loader2, AlertCircle, User, Phone, Mail, Lock, ArrowLeft, CheckCircle, KeyRound, RefreshCw, Shield, Zap, TrendingUp, Terminal, Copy, Check } from 'lucide-react';
 
 interface AuthPageProps {
   onLogin: (user?: any) => void;
   demoMode: boolean;
   initialMode?: 'login' | 'register' | 'update_password';
+  setManualRecoveryActive?: (active: boolean) => void;
+  onRecoveryComplete?: () => void;
 }
 
-export function AuthPage({ onLogin, demoMode, initialMode = 'login' }: AuthPageProps) {
-  const [view, setView] = useState<'login' | 'register' | 'forgot' | 'verify' | 'update_password' | 'verify_reset'>('login');
+export function AuthPage({ onLogin, demoMode, initialMode = 'login', setManualRecoveryActive, onRecoveryComplete }: AuthPageProps) {
+  // Views:
+  // login: Standard Sign In
+  // register: Sign Up
+  // verify: Sign Up OTP check
+  // forgot: Request Password Reset (Enter Email)
+  // verify_recovery: Enter Reset OTP
+  // reset_password: Enter New Password (after OTP valid)
+  // update_password: Link-based reset (Legacy/Backup)
+  const [view, setView] = useState<'login' | 'register' | 'forgot' | 'verify' | 'verify_recovery' | 'reset_password' | 'update_password'>('login');
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<{ type: 'error' | 'success', text: string } | null>(null);
+  const [showForgotRlsFix, setShowForgotRlsFix] = useState(false);
+  const [copiedSql, setCopiedSql] = useState(false);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -35,16 +47,22 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login' }: AuthPageP
     return () => clearInterval(interval);
   }, [resendTimer]);
 
+  const handleCopySql = () => {
+    navigator.clipboard.writeText(`create policy "Allow public profile check" on public.profiles for select using (true);`);
+    setCopiedSql(true);
+    setTimeout(() => setCopiedSql(false), 2000);
+  };
+
   const handleResendOtp = async () => {
       if (resendTimer > 0) return;
       setLoading(true);
       setMsg(null);
       try {
-          // If we are in verify_reset mode, we need to resend the recovery email, not signup
-          if (view === 'verify_reset') {
+          // If we are in verify_recovery mode, we need to resend the recovery email
+          if (view === 'verify_recovery') {
              const { error } = await supabase.auth.resetPasswordForEmail(email.trim());
              if (error) throw error;
-             setMsg({ type: 'success', text: 'Reset code resent. Check your email.' });
+             setMsg({ type: 'success', text: 'Recovery code resent. Check your email.' });
           } else {
              // Default signup resend
              const { error } = await supabase.auth.resend({
@@ -74,6 +92,7 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login' }: AuthPageP
     e.preventDefault();
     setLoading(true);
     setMsg(null);
+    setShowForgotRlsFix(false);
 
     const cleanEmail = email.trim();
     const cleanPassword = password.trim();
@@ -85,7 +104,7 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login' }: AuthPageP
               password: cleanPassword,
             });
             if (error) throw error;
-            // Login successful
+            // Login successful - parent component handles session change
         } else if (view === 'register') {
             const { data, error } = await supabase.auth.signUp({
               email: cleanEmail,
@@ -114,8 +133,6 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login' }: AuthPageP
             setResendTimer(30);
         } else if (view === 'verify') {
             const cleanOtp = otp.trim();
-            
-            // 1. Attempt verification
             const { data, error } = await supabase.auth.verifyOtp({
                 email: cleanEmail,
                 token: cleanOtp,
@@ -123,37 +140,48 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login' }: AuthPageP
             });
             
             if (error) {
-                console.warn("OTP Verification failed:", error.message);
-                
-                // 2. SMART FALLBACK: 
                 if (cleanPassword) {
                     const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
                         email: cleanEmail,
                         password: cleanPassword
                     });
-                    
-                    if (!loginError && loginData.session) {
-                        setMsg({ type: 'success', text: 'Verified successfully (via login). Redirecting...' });
-                        return; // Success!
-                    }
+                    if (!loginError && loginData.session) return; 
                 }
-
-                if (error.message.includes("expired") || error.message.includes("invalid")) {
-                    throw new Error("Invalid or expired code. Did you request a new one? Only the latest code works.");
-                }
-                throw error;
+                throw new Error("Invalid or expired code. Please try again.");
             }
-            
-            setMsg({ type: 'success', text: 'Email verified successfully! Logging you in...' });
+            setMsg({ type: 'success', text: 'Email verified! Logging in...' });
         } else if (view === 'forgot') {
+            // 1. Check if User Exists in DB
+            const { data: profile, error: profileError } = await supabase
+                .from('profiles')
+                .select('id')
+                .eq('email', cleanEmail)
+                .maybeSingle();
+
+            if (!profile) {
+                 // Either truly not registered, OR RLS hidden.
+                 setMsg({ type: 'error', text: 'User is not registered. Please register yourself.' });
+                 setShowForgotRlsFix(true); // Show SQL helper in case it's an RLS issue
+                 setLoading(false);
+                 return;
+            }
+
+            // 2. User exists, send recovery email
             const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail);
             if (error) throw error;
-            setMsg({ type: 'success', text: 'Reset code sent! Check your email.' });
-            setView('verify_reset');
+
+            setMsg({ type: 'success', text: 'Recovery code sent! Check your email.' });
+            setView('verify_recovery'); // Move to OTP entry step
             setResendTimer(60);
-        } else if (view === 'verify_reset') {
+
+        } else if (view === 'verify_recovery') {
              const cleanOtp = otp.trim();
              
+             // CRITICAL: Lock UI BEFORE verifying OTP. 
+             // verifyOtp creates a session which triggers onAuthStateChange in App.tsx.
+             // If we don't lock, App.tsx will switch views and unmount this component before we finish.
+             if (setManualRecoveryActive) setManualRecoveryActive(true);
+
              // 1. Verify Recovery Token
              const { data, error } = await supabase.auth.verifyOtp({
                  email: cleanEmail,
@@ -161,45 +189,94 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login' }: AuthPageP
                  type: 'recovery'
              });
 
-             if (error) throw error;
+             if (error) {
+                 if (setManualRecoveryActive) setManualRecoveryActive(false); // Unlock if failed
+                 throw error;
+             }
+             
+             // Explicitly set session to ensure next step works
+             if (data.session) {
+                 await supabase.auth.setSession(data.session);
+             }
 
-             // 2. Update Password immediately after verification
+             setMsg({ type: 'success', text: 'Code verified successfully.' });
+             setView('reset_password'); // Move to Password Update step
+             
+        } else if (view === 'reset_password') {
+             // 1. Update Password
              const { error: updateError } = await supabase.auth.updateUser({
                  password: cleanPassword
              });
 
              if (updateError) throw updateError;
 
-             setMsg({ type: 'success', text: 'Password reset successful! Logging you in...' });
-             setTimeout(() => {
-                 onLogin(data.session?.user);
-             }, 1500);
+             // 2. Success Feedback & UI Reset
+             setMsg({ type: 'success', text: 'Password updated! Redirecting to login...' });
+             
+             // 3. IMMEDIATE LOADING STOP
+             setLoading(false);
+
+             // 4. Cleanup and Redirect
+             setTimeout(async () => {
+                // If a parent callback is provided, use it to clear global session state
+                if (onRecoveryComplete) {
+                    onRecoveryComplete();
+                } else {
+                    // Fallback local cleanup
+                    try { await supabase.auth.signOut(); } catch (e) {}
+                }
+                
+                // Reset internal state
+                setPassword('');
+                setOtp('');
+                
+                // Unlock global app state if manual recovery was active
+                if (setManualRecoveryActive) setManualRecoveryActive(false);
+                
+                // Force view to login
+                setView('login');
+                setMsg(null);
+             }, 1000);
+             
+             return; 
 
         } else if (view === 'update_password') {
+            // Legacy/Link flow
             const { error } = await supabase.auth.updateUser({ password: cleanPassword });
             if (error) throw error;
-            setMsg({ type: 'success', text: 'Password updated successfully! Redirecting...' });
-            setTimeout(() => {
-                onLogin(); // Signal completion to parent
-            }, 1500);
+            
+            setMsg({ type: 'success', text: 'Password updated! Redirecting...' });
+            setLoading(false);
+            
+            setTimeout(async () => {
+                if (onRecoveryComplete) {
+                    onRecoveryComplete();
+                } else {
+                    try { await supabase.auth.signOut(); } catch (e) {}
+                    onLogin(); 
+                }
+            }, 1000);
+            return;
         }
     } catch (err: any) {
       console.error("Auth Error:", err);
       let errorMessage = err.message || "An unexpected error occurred";
-      if (err.message === "Invalid login credentials") {
-          errorMessage = "Invalid email or password.";
-      } else if (err.message.includes("User already registered")) {
-          errorMessage = "User already registered. Please Log In.";
-      }
+      if (err.message === "Invalid login credentials") errorMessage = "Invalid email or password.";
       setMsg({ type: 'error', text: errorMessage });
     } finally {
-      setLoading(false);
+      // Ensure loading is always turned off if not already handled
+      // Note: for reset_password success path, we handled it explicitly above
+      if (view !== 'reset_password' && view !== 'update_password') {
+          setLoading(false);
+      } else if (msg?.type === 'error') {
+          setLoading(false);
+      }
     }
   };
 
   const renderForm = () => {
-      // --- UPDATE PASSWORD VIEW (Used via Link) ---
-      if (view === 'update_password') {
+      // --- STEP 3: RESET PASSWORD (NEW PASSWORD INPUT) ---
+      if (view === 'reset_password' || view === 'update_password') {
           return (
               <form onSubmit={handleAuth} className="space-y-5 animate-fade-in mt-6">
                   <div className="text-center mb-8">
@@ -207,7 +284,7 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login' }: AuthPageP
                           <Lock className="w-6 h-6" />
                       </div>
                       <h3 className="text-xl font-bold text-gray-900">Set New Password</h3>
-                      <p className="text-sm text-gray-500 mt-2">Please enter your new password below</p>
+                      <p className="text-sm text-gray-500 mt-2">Create a new secure password for your account.</p>
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-gray-700 uppercase mb-1.5 ml-1">New Password</label>
@@ -237,21 +314,20 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login' }: AuthPageP
           );
       }
 
-      // --- VERIFY RECOVERY (RESET PASSWORD) VIEW ---
-      if (view === 'verify_reset') {
+      // --- STEP 2: VERIFY RECOVERY CODE ---
+      if (view === 'verify_recovery') {
         return (
             <div className="space-y-6 animate-fade-in">
                 <div className="text-center space-y-2 mb-8">
                     <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mx-auto text-indigo-600 mb-4">
                         <KeyRound className="w-6 h-6" />
                     </div>
-                    <h3 className="text-2xl font-bold text-gray-900">Reset Password</h3>
-                    <p className="text-gray-500 text-sm">Enter the code sent to <span className="font-semibold text-gray-800">{email}</span> and your new password.</p>
+                    <h3 className="text-2xl font-bold text-gray-900">Verify Code</h3>
+                    <p className="text-gray-500 text-sm">Enter the 8-digit code sent to <span className="font-semibold text-gray-800">{email}</span></p>
                 </div>
                 
                 <form onSubmit={handleAuth} className="space-y-5">
                   <div>
-                      <label className="block text-xs font-semibold text-gray-700 uppercase mb-1.5 ml-1">Recovery Code</label>
                       <div className="relative">
                           <KeyRound className="w-5 h-5 absolute left-3 top-3.5 text-gray-400" />
                           <input 
@@ -266,29 +342,13 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login' }: AuthPageP
                       </div>
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 uppercase mb-1.5 ml-1">New Password</label>
-                    <div className="relative group">
-                        <Lock className="w-5 h-5 absolute left-3 top-3.5 text-gray-400 group-focus-within:text-indigo-600 transition-colors" />
-                        <input 
-                        type="password" 
-                        required 
-                        minLength={6}
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-gray-50 focus:bg-white"
-                        placeholder="New Password"
-                        value={password}
-                        onChange={e => setPassword(e.target.value)}
-                        />
-                    </div>
-                   </div>
-
                   <button 
                       type="submit" 
-                      disabled={loading || otp.length < 6 || password.length < 6}
-                      className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3 rounded-lg transition-all shadow-lg hover:shadow-xl mt-6 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={loading || otp.length < 6}
+                      className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3 rounded-lg transition-all shadow-lg hover:shadow-xl mt-6 flex items-center justify-center gap-2 disabled:opacity-50"
                       >
                       {loading && <Loader2 className="w-5 h-5 animate-spin" />}
-                      Reset Password
+                      Verify Code
                   </button>
                  </form>
 
@@ -305,17 +365,17 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login' }: AuthPageP
                       
                       <button 
                           type="button"
-                          onClick={() => setView('login')}
+                          onClick={() => setView('forgot')}
                           className="w-full text-gray-500 hover:text-gray-700 font-medium py-2 flex items-center justify-center gap-2 text-sm"
                       >
-                          Cancel
+                          Incorrect email? Go back
                       </button>
                  </div>
             </div>
         );
       }
 
-      // --- VERIFY OTP VIEW (SIGNUP) ---
+      // --- STEP 2A: VERIFY SIGNUP CODE (Original Verify) ---
       if (view === 'verify') {
           return (
               <div className="space-y-6 animate-fade-in">
@@ -341,19 +401,18 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login' }: AuthPageP
                             onChange={e => setOtp(e.target.value.replace(/[^0-9]/g, ''))}
                             />
                         </div>
-                        <p className="text-xs text-gray-400 mt-2 text-center">Enter the most recent code received.</p>
                     </div>
                     <button 
                         type="submit" 
                         disabled={loading || otp.length < 6}
-                        className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3 rounded-lg transition-all shadow-lg hover:shadow-xl mt-6 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3 rounded-lg transition-all shadow-lg hover:shadow-xl mt-6 flex items-center justify-center gap-2 disabled:opacity-50"
                         >
                         {loading && <Loader2 className="w-5 h-5 animate-spin" />}
                         Verify & Access
                     </button>
                    </form>
 
-                   <div className="flex flex-col gap-3 mt-6">
+                   <div className="flex flex-col gap-6 mt-6">
                         <button 
                             type="button"
                             onClick={handleResendOtp}
@@ -369,20 +428,20 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login' }: AuthPageP
                             onClick={() => setView('register')}
                             className="w-full text-gray-500 hover:text-gray-700 font-medium py-2 flex items-center justify-center gap-2 text-sm"
                         >
-                            Incorrect email? Go back
+                            Go back
                         </button>
                    </div>
               </div>
           );
       }
 
-      // --- FORGOT PASSWORD VIEW (Request) ---
+      // --- STEP 1: FORGOT PASSWORD (EMAIL INPUT) ---
       if (view === 'forgot') {
           return (
               <form onSubmit={handleAuth} className="space-y-5 animate-fade-in mt-6">
                   <div className="text-center mb-8">
                       <h3 className="text-xl font-bold text-gray-900">Reset Password</h3>
-                      <p className="text-sm text-gray-500 mt-2">Enter your email to receive a recovery code</p>
+                      <p className="text-sm text-gray-500 mt-2">Enter your email to check registration and receive code</p>
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-gray-700 uppercase mb-1.5 ml-1">Email Address</label>
@@ -413,11 +472,29 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login' }: AuthPageP
                     >
                         <ArrowLeft className="w-4 h-4" /> Back to Login
                     </button>
+                    
+                    {showForgotRlsFix && (
+                        <div className="mt-6 p-3 bg-blue-50 border border-blue-100 rounded-lg text-xs animate-fade-in">
+                            <div className="flex items-start gap-2 text-blue-800 font-semibold mb-2">
+                                <Terminal className="w-4 h-4 mt-0.5" />
+                                <span>Developer Fix Required</span>
+                            </div>
+                            <p className="text-blue-700 mb-2">
+                                If you know this user exists, the database is blocking the check. Run this SQL in Supabase:
+                            </p>
+                            <div className="bg-slate-800 rounded p-2 text-green-400 font-mono mb-2 relative group">
+                                <pre className="whitespace-pre-wrap">{`create policy "Allow public profile check" on public.profiles for select using (true);`}</pre>
+                                <button onClick={handleCopySql} className="absolute top-1 right-1 p-1 bg-white/10 rounded hover:bg-white/20">
+                                    {copiedSql ? <Check className="w-3 h-3 text-white"/> : <Copy className="w-3 h-3 text-white"/>}
+                                </button>
+                            </div>
+                        </div>
+                    )}
               </form>
           );
       }
 
-      // --- LOGIN & REGISTER VIEW ---
+      // --- DEFAULT: LOGIN & REGISTER VIEW ---
       return (
         <form onSubmit={handleAuth} className="space-y-5 animate-fade-in mt-2">
             {view === 'register' && (
@@ -570,13 +647,19 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login' }: AuthPageP
 
              <div className="mb-8">
                  <h2 className="text-2xl font-bold text-gray-900">
-                     {view === 'login' ? 'Welcome back' : view === 'register' ? 'Get started' : view === 'verify' ? 'Verification' : view === 'update_password' ? 'Security' : view === 'verify_reset' ? 'Password Recovery' : 'Reset Password'}
+                     {view === 'login' ? 'Welcome back' : 
+                      view === 'register' ? 'Get started' : 
+                      view === 'verify' || view === 'verify_recovery' ? 'Verification' : 
+                      view === 'reset_password' || view === 'update_password' ? 'Set New Password' : 
+                      'Reset Password'}
                  </h2>
                  <p className="text-gray-500 mt-2 text-sm">
                      {view === 'login' && 'Please enter your details to sign in.'}
                      {view === 'register' && 'Create a new account to start analyzing logs.'}
-                     {view === 'update_password' && 'Enter your new secure password.'}
-                     {view === 'verify_reset' && 'Secure your account with a new password.'}
+                     {view === 'verify' && 'Check your email for the signup code.'}
+                     {view === 'verify_recovery' && 'Check your email for the recovery code.'}
+                     {(view === 'reset_password' || view === 'update_password') && 'Create a strong password to secure your account.'}
+                     {view === 'forgot' && 'We will check if you are registered first.'}
                  </p>
              </div>
 
@@ -589,7 +672,7 @@ export function AuthPage({ onLogin, demoMode, initialMode = 'login' }: AuthPageP
 
             {renderForm()}
 
-            {view !== 'forgot' && view !== 'verify' && view !== 'update_password' && view !== 'verify_reset' && (
+            {view !== 'forgot' && view !== 'verify' && view !== 'verify_recovery' && view !== 'reset_password' && view !== 'update_password' && (
                 <div className="mt-8 pt-6 border-t border-gray-100 text-center">
                     <p className="text-sm text-gray-500">
                         {view === 'login' ? "Don't have an account?" : "Already have an account?"}

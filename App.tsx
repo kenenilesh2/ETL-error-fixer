@@ -18,7 +18,8 @@ function App() {
   const [loadingSession, setLoadingSession] = useState(true);
   const [validationSuccess, setValidationSuccess] = useState(false);
   const [dbFetchError, setDbFetchError] = useState<string | null>(null);
-  const [recoveryMode, setRecoveryMode] = useState(false); // State for password reset flow
+  const [recoveryMode, setRecoveryMode] = useState(false); // State for password reset flow (via Link)
+  const [manualRecoveryActive, setManualRecoveryActive] = useState(false); // State for manual OTP reset flow
   
   // Delete Error State
   const [deleteError, setDeleteError] = useState(false);
@@ -186,6 +187,7 @@ function App() {
         setMode('upload');
         setInputText('');
         setRecoveryMode(false);
+        setManualRecoveryActive(false);
     }
   }
 
@@ -388,25 +390,31 @@ function App() {
       );
   }
 
-  // RECOVERY MODE CHECK: Show Update Password Screen
+  // RECOVERY MODE CHECK: Show Update Password Screen (from Link)
   if (recoveryMode) {
       return (
           <AuthPage 
               onLogin={() => setRecoveryMode(false)}
               demoMode={false} 
               initialMode="update_password" 
+              onRecoveryComplete={handleLogout}
           />
       );
   }
 
-  if (!session) {
+  // --- SHOW AUTH PAGE IF NOT LOGGED IN OR IN MANUAL RECOVERY FLOW ---
+  // We keep the AuthPage mounted if manualRecoveryActive is true, even if a session exists (from OTP verification)
+  // This ensures the "verify -> update -> logout" sequence completes without the Main App mounting prematurely.
+  if (!session || manualRecoveryActive) {
       return (
         <>
             {validationSuccess && <ValidationPopup onClose={() => setValidationSuccess(false)} />}
             <AuthPage 
                 onLogin={(user) => { if (user) setSession({ user }); }} 
                 demoMode={false} 
-                initialMode={validationSuccess ? 'login' : 'login'} 
+                initialMode={validationSuccess ? 'login' : 'login'}
+                setManualRecoveryActive={setManualRecoveryActive}
+                onRecoveryComplete={handleLogout}
             />
         </>
       );
@@ -464,7 +472,7 @@ function App() {
                   <div className="w-12 h-12 md:w-16 md:h-16 mb-4 flex items-center justify-center p-2 rounded-2xl bg-gray-50 group-hover:bg-white group-hover:scale-110 transition-transform duration-300">
                     <tool.icon className="w-full h-full" />
                   </div>
-                  <h3 className={`font-bold text-sm md:text-lg mb-1 group-hover:text-indigo-600 transition-colors`}>
+                  <h3 className="font-bold text-sm md:text-lg mb-1 group-hover:text-indigo-600 transition-colors">
                     {tool.name}
                   </h3>
                   <p className="text-[10px] md:text-xs text-gray-400 font-medium uppercase tracking-wide">
