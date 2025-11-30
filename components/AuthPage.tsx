@@ -642,32 +642,7 @@ END $$;
               {view === 'login' ? 'Sign In' : 'Create Account'}
             </button>
             
-            {(showAdminFix || (view === 'login' && email.trim() === 'kenenilesh2@gmail.com')) && (
-                <div className="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-900/30 rounded-lg text-xs animate-fade-in">
-                    <h4 className="font-bold text-yellow-800 dark:text-yellow-200 mb-2 flex items-center gap-2">
-                        <Terminal className="w-4 h-4"/> Admin Login Fix
-                    </h4>
-                    <p className="text-yellow-700 dark:text-yellow-300 mb-3">
-                        Supabase blocked access. Run this SQL to force reset:
-                        <br/><span className="font-bold">Password will be set to: admin@123</span>
-                    </p>
-                    <div className="bg-slate-900 rounded p-3 relative group">
-                        <pre className="text-green-400 font-mono whitespace-pre-wrap max-h-40 overflow-y-auto scrollbar-thin">
-                            {adminFixSql}
-                        </pre>
-                        <button 
-                            onClick={() => handleCopySql(adminFixSql)}
-                            className="absolute top-2 right-2 p-1.5 bg-white/10 rounded hover:bg-white/20 text-white transition-colors"
-                            title="Copy to Clipboard"
-                        >
-                            {copiedSql ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                        </button>
-                    </div>
-                    <p className="mt-2 text-yellow-600 dark:text-yellow-400 italic">
-                        1. Copy Code above.<br/>2. Go to Supabase -> SQL Editor -> New Query.<br/>3. Paste & Run.
-                    </p>
-                </div>
-            )}
+            
         </form>
       );
   }
