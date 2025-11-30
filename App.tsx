@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Upload, Search, Loader2, Database, AlertCircle, ArrowLeft, LogOut, Shield, X, CheckCircle, Terminal, Copy, Check, Menu } from 'lucide-react';
+import { Upload, Search, Loader2, Database, AlertCircle, ArrowLeft, LogOut, Shield, X, CheckCircle, Terminal, Copy, Check, Menu, Moon, Sun } from 'lucide-react';
 import { analyzeLog } from './services/geminiService';
 import { AnalysisResult, StoredError } from './types';
 import { AnalysisCard } from './components/AnalysisCard';
@@ -21,6 +21,14 @@ function App() {
   const [recoveryMode, setRecoveryMode] = useState(false); // State for password reset flow (via Link)
   const [manualRecoveryActive, setManualRecoveryActive] = useState(false); // State for manual OTP reset flow
   
+  // Theme State
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+      if (typeof window !== 'undefined') {
+          return document.documentElement.classList.contains('dark');
+      }
+      return false;
+  });
+
   // Delete Error State
   const [deleteError, setDeleteError] = useState(false);
   const [copiedSql, setCopiedSql] = useState(false);
@@ -100,6 +108,19 @@ function App() {
       }
   }, [session, recoveryMode]); 
 
+  // Toggle Theme
+  const toggleTheme = () => {
+      const newMode = !isDarkMode;
+      setIsDarkMode(newMode);
+      if (newMode) {
+          document.documentElement.classList.add('dark');
+          localStorage.setItem('theme', 'dark');
+      } else {
+          document.documentElement.classList.remove('dark');
+          localStorage.setItem('theme', 'light');
+      }
+  };
+
   // Sync profile logic to handle RLS safely after authentication
   const syncUserProfile = async (user: any) => {
       try {
@@ -108,10 +129,10 @@ function App() {
                 email: user.email,
                 first_name: user.user_metadata?.first_name || user.email?.split('@')[0] || 'User',
                 mobile: user.user_metadata?.mobile || '',
-                role: 'user' // Default to user, admin status is manually promoted in DB
-           }, { onConflict: 'id', ignoreDuplicates: true }); 
+                // Note: We do NOT set role here to avoid overwriting existing admin roles
+           }, { onConflict: 'id', ignoreDuplicates: false }); // ignoreDuplicates: false allows updating name/mobile but we should be careful about role
 
-           if (error && error.code !== '23505') {
+           if (error) {
                console.error("Profile sync error:", error);
            }
       } catch (e) {
@@ -124,11 +145,24 @@ function App() {
           setIsAdmin(false);
           return;
       }
-      if (session.user.email === 'admin@admin.com') {
-          setIsAdmin(true);
-          return;
+      
+      // Dynamic check: Query the profile to see if the user has the 'admin' role
+      try {
+          const { data, error } = await supabase
+              .from('profiles')
+              .select('role')
+              .eq('id', session.user.id)
+              .single();
+          
+          if (data && data.role === 'admin') {
+              setIsAdmin(true);
+          } else {
+              setIsAdmin(false);
+          }
+      } catch (e) {
+          console.error("Error checking admin status:", e);
+          setIsAdmin(false);
       }
-      setIsAdmin(false);
   };
 
   const fetchHistory = async (user: any) => {
@@ -329,15 +363,15 @@ function App() {
   }
 
   const ValidationPopup = ({ onClose }: { onClose: () => void }) => (
-      <div className="fixed top-8 left-1/2 transform -translate-x-1/2 bg-white border border-green-200 text-green-900 px-6 py-4 rounded-xl shadow-2xl z-[100] flex items-center gap-4 animate-bounce-in ring-4 ring-green-50/50">
-          <div className="bg-green-100 p-2 rounded-full">
-            <CheckCircle className="w-6 h-6 text-green-600" />
+      <div className="fixed top-8 left-1/2 transform -translate-x-1/2 bg-white dark:bg-slate-800 border border-green-200 dark:border-green-800 text-green-900 dark:text-green-100 px-6 py-4 rounded-xl shadow-2xl z-[100] flex items-center gap-4 animate-bounce-in ring-4 ring-green-50/50 dark:ring-green-900/50">
+          <div className="bg-green-100 dark:bg-green-900/50 p-2 rounded-full">
+            <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
           </div>
           <div>
               <h3 className="font-bold text-lg leading-tight">Success!</h3>
-              <p className="text-sm text-green-800 font-medium">Email validation done successfully.</p>
+              <p className="text-sm text-green-800 dark:text-green-300 font-medium">Email validation done successfully.</p>
           </div>
-          <button onClick={onClose} className="ml-2 text-gray-400 hover:text-gray-600 transition-colors p-1 hover:bg-gray-100 rounded-full">
+          <button onClick={onClose} className="ml-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors p-1 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full">
               <X className="w-5 h-5" />
           </button>
       </div>
@@ -345,16 +379,16 @@ function App() {
 
   const SqlFixModal = () => (
       <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-200">
-              <div className="bg-red-50 p-4 border-b border-red-100 flex items-center gap-3">
-                  <AlertCircle className="w-6 h-6 text-red-600" />
-                  <h3 className="font-bold text-red-900">Permission Denied</h3>
-                  <button onClick={() => setDeleteError(false)} className="ml-auto text-red-400 hover:text-red-700">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-200 dark:border-slate-700">
+              <div className="bg-red-50 dark:bg-red-900/20 p-4 border-b border-red-100 dark:border-red-900/30 flex items-center gap-3">
+                  <AlertCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
+                  <h3 className="font-bold text-red-900 dark:text-red-200">Permission Denied</h3>
+                  <button onClick={() => setDeleteError(false)} className="ml-auto text-red-400 hover:text-red-700 dark:hover:text-red-300">
                       <X className="w-5 h-5" />
                   </button>
               </div>
               <div className="p-6">
-                  <p className="text-gray-600 text-sm mb-4">
+                  <p className="text-gray-600 dark:text-gray-300 text-sm mb-4">
                       Supabase blocked the delete request. You need to enable a "DELETE" policy in your database.
                   </p>
                   <div className="bg-slate-900 rounded-lg p-3 border border-slate-700 shadow-inner">
@@ -384,7 +418,7 @@ function App() {
 
   if (loadingSession) {
       return (
-          <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-950">
               <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
           </div>
       );
@@ -398,6 +432,8 @@ function App() {
               demoMode={false} 
               initialMode="update_password" 
               onRecoveryComplete={handleLogout}
+              isDarkMode={isDarkMode}
+              toggleTheme={toggleTheme}
           />
       );
   }
@@ -415,6 +451,8 @@ function App() {
                 initialMode={validationSuccess ? 'login' : 'login'}
                 setManualRecoveryActive={setManualRecoveryActive}
                 onRecoveryComplete={handleLogout}
+                isDarkMode={isDarkMode}
+                toggleTheme={toggleTheme}
             />
         </>
       );
@@ -424,7 +462,12 @@ function App() {
       return (
           <>
             {validationSuccess && <ValidationPopup onClose={() => setValidationSuccess(false)} />}
-            <AdminDashboard onLogout={handleLogout} />
+            <AdminDashboard 
+                onLogout={handleLogout} 
+                isDarkMode={isDarkMode} 
+                toggleTheme={toggleTheme} 
+                userEmail={session.user.email} 
+            />
           </>
       );
   }
@@ -432,19 +475,22 @@ function App() {
   // --- LANDING PAGE VIEW ---
   if (!selectedTool) {
       return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col items-center justify-center p-6 relative">
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-slate-950 dark:to-slate-900 flex flex-col items-center justify-center p-6 relative transition-colors duration-300">
           <div className="absolute top-0 left-0 right-0 p-6 flex justify-between items-center z-10">
-              <h1 className="text-xl font-bold text-gray-800 tracking-tight flex items-center gap-2">
-                 <Shield className="w-6 h-6 text-indigo-600" /> ETL Remedy
+              <h1 className="text-xl font-bold text-gray-800 dark:text-white tracking-tight flex items-center gap-2">
+                 <Shield className="w-6 h-6 text-indigo-600 dark:text-indigo-400" /> ETL Remedy
               </h1>
               <div className="flex items-center gap-4">
                   <div className="flex flex-col items-end mr-2 hidden md:flex">
-                      <span className="text-sm font-semibold text-gray-700">{session.user.user_metadata?.first_name || 'Developer'}</span>
+                      <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">{session.user.user_metadata?.first_name || 'Developer'}</span>
                       <span className="text-xs text-gray-400">{session.user.email}</span>
                   </div>
+                  <button onClick={toggleTheme} className="p-2 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-slate-800 rounded-full transition-colors">
+                      {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                  </button>
                   <button 
                     onClick={handleLogout} 
-                    className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-all" 
+                    className="p-2 text-gray-500 dark:text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-all" 
                     title="Sign Out"
                   >
                     <LogOut className="w-5 h-5" />
@@ -454,10 +500,10 @@ function App() {
 
           <div className="max-w-5xl w-full z-10 mt-10">
             <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4 tracking-tight">
+              <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white mb-4 tracking-tight">
                 Select your ETL Platform
               </h2>
-              <p className="text-sm md:text-lg text-gray-500 max-w-2xl mx-auto px-4">
+              <p className="text-sm md:text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto px-4">
                 Our AI specializes in debugging logs from major enterprise integration tools. Choose your platform to start analyzing.
               </p>
             </div>
@@ -467,12 +513,12 @@ function App() {
                 <button
                   key={tool.id}
                   onClick={() => handleToolSelect(tool.id)}
-                  className="group bg-white rounded-xl p-4 md:p-6 shadow-sm hover:shadow-xl border border-gray-200 hover:border-indigo-100 transition-all duration-300 flex flex-col items-center text-center transform hover:-translate-y-1 active:scale-95"
+                  className="group bg-white dark:bg-slate-800 rounded-xl p-4 md:p-6 shadow-sm hover:shadow-xl border border-gray-200 dark:border-slate-700 hover:border-indigo-100 dark:hover:border-indigo-900 transition-all duration-300 flex flex-col items-center text-center transform hover:-translate-y-1 active:scale-95"
                 >
-                  <div className="w-12 h-12 md:w-16 md:h-16 mb-4 flex items-center justify-center p-2 rounded-2xl bg-gray-50 group-hover:bg-white group-hover:scale-110 transition-transform duration-300">
+                  <div className="w-12 h-12 md:w-16 md:h-16 mb-4 flex items-center justify-center p-2 rounded-2xl bg-gray-50 dark:bg-slate-900 group-hover:bg-white dark:group-hover:bg-slate-800 group-hover:scale-110 transition-transform duration-300">
                     <tool.icon className="w-full h-full" />
                   </div>
-                  <h3 className="font-bold text-sm md:text-lg mb-1 group-hover:text-indigo-600 transition-colors">
+                  <h3 className="font-bold text-sm md:text-lg mb-1 text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                     {tool.name}
                   </h3>
                   <p className="text-[10px] md:text-xs text-gray-400 font-medium uppercase tracking-wide">
@@ -488,7 +534,7 @@ function App() {
 
   // --- MAIN APP VIEW ---
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50">
+    <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-slate-950 transition-colors duration-300">
       <HistorySidebar 
         history={history} 
         onSelect={handleHistorySelect} 
@@ -502,35 +548,38 @@ function App() {
       {deleteError && <SqlFixModal />}
       
       <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
-        <header className="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-4 md:px-6 shadow-sm shrink-0 z-10">
+        <header className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 h-16 flex items-center justify-between px-4 md:px-6 shadow-sm shrink-0 z-10 transition-colors duration-300">
           <div className="flex items-center gap-2 md:gap-4">
              {/* Mobile Menu Toggle */}
              <button 
                 onClick={() => setMobileMenuOpen(true)}
-                className="md:hidden p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-md"
+                className="md:hidden p-2 -ml-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-md"
              >
                 <Menu className="w-5 h-5" />
              </button>
 
-             <button onClick={handleBackToHome} className="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition-colors">
+             <button onClick={handleBackToHome} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full text-gray-500 dark:text-gray-400 transition-colors">
                 <ArrowLeft className="w-5 h-5" />
              </button>
-             <div className="h-6 w-px bg-gray-300 mx-1 md:mx-2"></div>
+             <div className="h-6 w-px bg-gray-300 dark:bg-slate-700 mx-1 md:mx-2"></div>
              <div className="flex items-center gap-2">
                  {(() => {
                      const ToolIcon = TOOLS.find(t => t.id === selectedTool)?.icon || Database;
                      return <ToolIcon className="w-5 h-5 md:w-6 md:h-6" />;
                  })()}
-                 <h1 className="text-base md:text-lg font-bold text-gray-800 truncate max-w-[150px] md:max-w-none">
-                    {TOOLS.find(t => t.id === selectedTool)?.name} <span className="text-gray-400 font-normal hidden sm:inline">Analyzer</span>
+                 <h1 className="text-base md:text-lg font-bold text-gray-800 dark:text-white truncate max-w-[150px] md:max-w-none">
+                    {TOOLS.find(t => t.id === selectedTool)?.name} <span className="text-gray-400 dark:text-slate-500 font-normal hidden sm:inline">Analyzer</span>
                  </h1>
              </div>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-sm text-gray-500 hidden md:block">
-                Logged in as <span className="font-semibold text-gray-700">{session.user.user_metadata?.first_name || session.user.email}</span>
+            <button onClick={toggleTheme} className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-slate-800">
+                {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </button>
+            <span className="text-sm text-gray-500 dark:text-gray-400 hidden md:block">
+                Logged in as <span className="font-semibold text-gray-700 dark:text-gray-300">{session.user.user_metadata?.first_name || session.user.email}</span>
             </span>
-            <button onClick={handleLogout} className="text-gray-400 hover:text-red-600 transition-colors p-2 hover:bg-red-50 rounded-full">
+            <button onClick={handleLogout} className="text-gray-400 hover:text-red-600 transition-colors p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full">
                 <LogOut className="w-5 h-5" />
             </button>
           </div>
@@ -539,26 +588,26 @@ function App() {
         <main className="flex-1 overflow-y-auto p-4 md:p-6 scrollbar-thin">
           <div className="max-w-4xl mx-auto space-y-6 md:space-y-8 pb-10">
             {dbFetchError && (
-                 <div className="bg-red-50 border border-red-200 p-4 rounded-lg flex items-start gap-3">
-                     <AlertCircle className="w-5 h-5 text-red-600 mt-0.5" />
+                 <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/30 p-4 rounded-lg flex items-start gap-3">
+                     <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 mt-0.5" />
                      <div>
-                         <h4 className="font-bold text-red-800 text-sm">History Load Failed</h4>
-                         <p className="text-sm text-red-700">{dbFetchError}</p>
+                         <h4 className="font-bold text-red-800 dark:text-red-200 text-sm">History Load Failed</h4>
+                         <p className="text-sm text-red-700 dark:text-red-300">{dbFetchError}</p>
                      </div>
                  </div>
             )}
             
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-1">
-                <div className="flex border-b border-gray-100">
+            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-200 dark:border-slate-800 p-1 transition-colors duration-300">
+                <div className="flex border-b border-gray-100 dark:border-slate-800">
                     <button 
                         onClick={() => setMode('upload')}
-                        className={`flex-1 py-3 text-sm font-semibold flex items-center justify-center gap-2 transition-colors ${mode === 'upload' ? 'text-indigo-600 bg-indigo-50/50' : 'text-gray-500 hover:text-gray-700'}`}
+                        className={`flex-1 py-3 text-sm font-semibold flex items-center justify-center gap-2 transition-colors ${mode === 'upload' ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-900/20' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
                     >
                         <Upload className="w-4 h-4" /> <span className="hidden sm:inline">Upload Log File</span> <span className="sm:hidden">Upload</span>
                     </button>
                     <button 
                         onClick={() => setMode('manual')}
-                        className={`flex-1 py-3 text-sm font-semibold flex items-center justify-center gap-2 transition-colors ${mode === 'manual' ? 'text-indigo-600 bg-indigo-50/50' : 'text-gray-500 hover:text-gray-700'}`}
+                        className={`flex-1 py-3 text-sm font-semibold flex items-center justify-center gap-2 transition-colors ${mode === 'manual' ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-900/20' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
                     >
                         <Search className="w-4 h-4" /> <span className="hidden sm:inline">Paste Error / Console</span> <span className="sm:hidden">Paste</span>
                     </button>
@@ -567,15 +616,15 @@ function App() {
                 <div className="p-4 md:p-6">
                     {mode === 'upload' ? (
                         <div 
-                            className="border-2 border-dashed border-gray-300 rounded-lg p-6 md:p-10 text-center hover:border-indigo-400 hover:bg-indigo-50/30 transition-all cursor-pointer group"
+                            className="border-2 border-dashed border-gray-300 dark:border-slate-700 rounded-lg p-6 md:p-10 text-center hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50/30 dark:hover:bg-indigo-900/10 transition-all cursor-pointer group"
                             onClick={() => fileInputRef.current?.click()}
                         >
                             <input type="file" ref={fileInputRef} className="hidden" accept=".log,.txt" onChange={handleFileUpload} />
-                            <div className="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                            <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
                                 <Upload className="w-6 h-6" />
                             </div>
-                            <h3 className="text-gray-900 font-medium">Click to upload log file</h3>
-                            <p className="text-gray-500 text-xs md:text-sm mt-1">Supports .txt and .log files</p>
+                            <h3 className="text-gray-900 dark:text-white font-medium">Click to upload log file</h3>
+                            <p className="text-gray-500 dark:text-gray-400 text-xs md:text-sm mt-1">Supports .txt and .log files</p>
                         </div>
                     ) : (
                         <div>
@@ -583,10 +632,10 @@ function App() {
                                 value={inputText}
                                 onChange={(e) => setInputText(e.target.value)}
                                 placeholder={`Paste your ${selectedTool} error log or stack trace here...`}
-                                className="w-full h-40 p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none font-mono text-sm bg-gray-50 text-gray-800 resize-none"
+                                className="w-full h-40 p-4 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none font-mono text-sm bg-gray-50 dark:bg-slate-950 text-gray-800 dark:text-gray-200 resize-none transition-colors"
                             />
                             <div className="flex justify-between items-center mt-4">
-                                <span className="text-xs text-gray-400">{inputText.length} chars</span>
+                                <span className="text-xs text-gray-400 dark:text-gray-500">{inputText.length} chars</span>
                                 <button
                                     onClick={processAnalysis}
                                     disabled={isAnalyzing || !inputText.trim()}
@@ -601,7 +650,7 @@ function App() {
             </div>
 
             {errorMsg && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-start gap-3 animate-fade-in">
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/30 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg flex items-start gap-3 animate-fade-in">
                     <AlertCircle className="w-5 h-5 mt-0.5 shrink-0" />
                     <div><h4 className="font-bold text-sm">Analysis Failed</h4><p className="text-sm opacity-90">{errorMsg}</p></div>
                 </div>

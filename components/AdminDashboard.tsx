@@ -3,14 +3,21 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { StoredError, UserProfile } from '../types';
 import { AnalysisCard } from './AnalysisCard';
-import { Users, FileWarning, Activity, Eye, X, RefreshCw, Shield, LogOut, Mail, User, AlertCircle } from 'lucide-react';
+import { Users, FileWarning, Activity, Eye, X, RefreshCw, Shield, LogOut, Mail, User, AlertCircle, Moon, Sun } from 'lucide-react';
 
 interface GlobalActivity extends StoredError {
     userEmail?: string;
     userName?: string;
 }
 
-export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
+interface AdminDashboardProps {
+    onLogout: () => void;
+    isDarkMode?: boolean;
+    toggleTheme?: () => void;
+    userEmail?: string;
+}
+
+export function AdminDashboard({ onLogout, isDarkMode, toggleTheme, userEmail }: AdminDashboardProps) {
     const [users, setUsers] = useState<UserProfile[]>([]);
     const [stats, setStats] = useState({ totalUsers: 0, totalErrors: 0 });
     const [globalHistory, setGlobalHistory] = useState<GlobalActivity[]>([]);
@@ -95,16 +102,16 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     const renderMainContent = () => {
         if (activeView === 'users') {
             return (
-                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden animate-fade-in">
-                    <div className="px-6 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
-                        <h2 className="font-semibold text-gray-800 flex items-center gap-2">
+                 <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-200 dark:border-slate-800 overflow-hidden animate-fade-in transition-colors duration-300">
+                    <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-900 flex justify-between items-center">
+                        <h2 className="font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
                              <Users className="w-4 h-4 text-indigo-500" /> Registered Users
                         </h2>
-                        <span className="text-xs text-gray-500">Total: {users.length}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">Total: {users.length}</span>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left">
-                            <thead className="bg-gray-50 text-gray-500 text-xs uppercase font-semibold border-b border-gray-200">
+                            <thead className="bg-gray-50 dark:bg-slate-800 text-gray-500 dark:text-gray-400 text-xs uppercase font-semibold border-b border-gray-200 dark:border-slate-700">
                                 <tr>
                                     <th className="px-6 py-3">Name</th>
                                     <th className="px-6 py-3">Email</th>
@@ -113,25 +120,25 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                                     <th className="px-6 py-3">Joined</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-100 text-sm">
+                            <tbody className="divide-y divide-gray-100 dark:divide-slate-800 text-sm">
                                 {users.length === 0 ? (
                                     <tr>
-                                        <td colSpan={5} className="px-6 py-8 text-center text-gray-400">
+                                        <td colSpan={5} className="px-6 py-8 text-center text-gray-400 dark:text-gray-500">
                                             No users found or permission denied.
                                         </td>
                                     </tr>
                                 ) : (
                                     users.map(u => (
-                                        <tr key={u.id} className="hover:bg-gray-50 transition-colors">
-                                            <td className="px-6 py-3 font-medium text-gray-900">{u.first_name || '-'}</td>
-                                            <td className="px-6 py-3 text-gray-600">{u.email}</td>
-                                            <td className="px-6 py-3 text-gray-600 font-mono text-xs">{u.mobile || 'N/A'}</td>
+                                        <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                                            <td className="px-6 py-3 font-medium text-gray-900 dark:text-gray-200">{u.first_name || '-'}</td>
+                                            <td className="px-6 py-3 text-gray-600 dark:text-gray-400">{u.email}</td>
+                                            <td className="px-6 py-3 text-gray-600 dark:text-gray-400 font-mono text-xs">{u.mobile || 'N/A'}</td>
                                             <td className="px-6 py-3">
-                                                <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase ${u.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'}`}>
+                                                <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase ${u.role === 'admin' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-400'}`}>
                                                     {u.role}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-3 text-gray-500">{new Date(u.created_at).toLocaleDateString()}</td>
+                                            <td className="px-6 py-3 text-gray-500 dark:text-gray-500">{new Date(u.created_at).toLocaleDateString()}</td>
                                         </tr>
                                     ))
                                 )}
@@ -147,9 +154,9 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         const subtitle = activeView === 'errors' ? `Showing last ${allErrors.length} errors` : 'Real-time Feed (Last 20)';
 
         return (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden animate-fade-in">
-                <div className="px-6 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
-                    <h2 className="font-semibold text-gray-800 flex items-center gap-2">
+            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-200 dark:border-slate-800 overflow-hidden animate-fade-in transition-colors duration-300">
+                <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-900 flex justify-between items-center">
+                    <h2 className="font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
                         {activeView === 'errors' ? <FileWarning className="w-4 h-4 text-indigo-500" /> : <Activity className="w-4 h-4 text-indigo-500" />}
                         {title}
                     </h2>
@@ -157,7 +164,7 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">
-                        <thead className="bg-gray-50 text-gray-500 text-xs uppercase font-semibold border-b border-gray-200">
+                        <thead className="bg-gray-50 dark:bg-slate-800 text-gray-500 dark:text-gray-400 text-xs uppercase font-semibold border-b border-gray-200 dark:border-slate-700">
                             <tr>
                                 <th className="px-6 py-3">Time</th>
                                 <th className="px-6 py-3">User</th>
@@ -166,40 +173,40 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                                 <th className="px-6 py-3">Action</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100 text-sm">
+                        <tbody className="divide-y divide-gray-100 dark:divide-slate-800 text-sm">
                             {displayData.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-8 text-center text-gray-400">
+                                    <td colSpan={5} className="px-6 py-8 text-center text-gray-400 dark:text-gray-500">
                                         No recent activity found.
                                     </td>
                                 </tr>
                             ) : (
                                 displayData.map((item) => (
-                                    <tr key={item.id} className="hover:bg-gray-50 transition-colors">
-                                        <td className="px-6 py-3 text-gray-500 whitespace-nowrap">
+                                    <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                                        <td className="px-6 py-3 text-gray-500 dark:text-gray-400 whitespace-nowrap">
                                             {new Date(item.timestamp).toLocaleString()}
                                         </td>
                                         <td className="px-6 py-3">
                                             <div className="flex flex-col">
-                                                <span className="font-medium text-gray-900">{item.userName || 'Unknown'}</span>
-                                                <span className="text-xs text-gray-500">{item.userEmail}</span>
+                                                <span className="font-medium text-gray-900 dark:text-gray-200">{item.userName || 'Unknown'}</span>
+                                                <span className="text-xs text-gray-500 dark:text-gray-500">{item.userEmail}</span>
                                             </div>
                                         </td>
                                         <td className="px-6 py-3">
-                                             <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                                             <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-gray-300">
                                                 {item.result.tool}
                                              </span>
                                         </td>
                                         <td className="px-6 py-3">
-                                            <div className="font-medium text-gray-800 truncate max-w-xs" title={item.result.errorType}>
+                                            <div className="font-medium text-gray-800 dark:text-gray-200 truncate max-w-xs" title={item.result.errorType}>
                                                 {item.result.errorType}
                                             </div>
                                             <div className="flex items-center gap-2 mt-1">
                                                  <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase
-                                                    ${item.result.severity === 'Critical' ? 'bg-red-100 text-red-700' : 
-                                                      item.result.severity === 'High' ? 'bg-orange-100 text-orange-700' : 
-                                                      item.result.severity === 'Medium' ? 'bg-yellow-100 text-yellow-700' : 
-                                                      'bg-blue-100 text-blue-700'}`}>
+                                                    ${item.result.severity === 'Critical' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' : 
+                                                      item.result.severity === 'High' ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300' : 
+                                                      item.result.severity === 'Medium' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300' : 
+                                                      'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'}`}>
                                                     {item.result.severity}
                                                 </span>
                                                 <span className="text-xs text-gray-400 truncate max-w-[100px]">{item.result.component}</span>
@@ -208,7 +215,7 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                                         <td className="px-6 py-3">
                                             <button 
                                                 onClick={() => setViewError(item)}
-                                                className="text-indigo-600 hover:text-indigo-800 text-xs font-bold flex items-center gap-1 bg-indigo-50 px-3 py-1.5 rounded hover:bg-indigo-100 transition-colors"
+                                                className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 text-xs font-bold flex items-center gap-1 bg-indigo-50 dark:bg-indigo-900/20 px-3 py-1.5 rounded hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors"
                                             >
                                                 <Eye className="w-3 h-3" /> View Details
                                             </button>
@@ -224,41 +231,41 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     }
 
     return (
-        <div className="min-h-screen bg-gray-100 font-sans">
+        <div className="min-h-screen bg-gray-100 dark:bg-slate-950 font-sans transition-colors duration-300">
             {viewError && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
-                        <div className="flex justify-between items-center p-4 border-b border-gray-100 bg-gray-50">
-                            <h3 className="font-bold text-gray-800 flex items-center gap-2">
-                                <FileWarning className="w-5 h-5 text-indigo-600"/>
+                    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col border border-gray-200 dark:border-slate-800">
+                        <div className="flex justify-between items-center p-4 border-b border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-900">
+                            <h3 className="font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                                <FileWarning className="w-5 h-5 text-indigo-600 dark:text-indigo-400"/>
                                 Error Analysis Details
                             </h3>
                             <button 
                                 onClick={() => setViewError(null)}
-                                className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+                                className="p-1 hover:bg-gray-200 dark:hover:bg-slate-800 rounded-full transition-colors"
                             >
-                                <X className="w-5 h-5 text-gray-500" />
+                                <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
                             </button>
                         </div>
-                        <div className="p-6 overflow-y-auto bg-gray-50/50">
+                        <div className="p-6 overflow-y-auto bg-gray-50/50 dark:bg-slate-950/50">
                             <AnalysisCard result={viewError.result} />
-                            <div className="mt-6 border-t border-gray-200 pt-4 bg-white p-4 rounded-lg border">
-                                 <h4 className="text-xs font-bold text-gray-500 uppercase mb-3">User Context</h4>
+                            <div className="mt-6 border-t border-gray-200 dark:border-slate-800 pt-4 bg-white dark:bg-slate-900 p-4 rounded-lg border dark:border-slate-700">
+                                 <h4 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-3">User Context</h4>
                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                                      <div className="flex items-center gap-2">
                                          <User className="w-4 h-4 text-gray-400" />
-                                         <span className="text-gray-500">User:</span>
-                                         <span className="font-semibold text-gray-900">{(viewError as any).userName}</span>
+                                         <span className="text-gray-500 dark:text-gray-400">User:</span>
+                                         <span className="font-semibold text-gray-900 dark:text-white">{(viewError as any).userName}</span>
                                      </div>
                                      <div className="flex items-center gap-2">
                                          <Mail className="w-4 h-4 text-gray-400" />
-                                         <span className="text-gray-500">Email:</span>
-                                         <span className="font-mono text-gray-700">{(viewError as any).userEmail}</span>
+                                         <span className="text-gray-500 dark:text-gray-400">Email:</span>
+                                         <span className="font-mono text-gray-700 dark:text-gray-300">{(viewError as any).userEmail}</span>
                                      </div>
                                      <div className="flex items-center gap-2">
                                          <Activity className="w-4 h-4 text-gray-400" />
-                                         <span className="text-gray-500">Timestamp:</span>
-                                         <span className="font-mono text-gray-700">{new Date(viewError.timestamp).toLocaleString()}</span>
+                                         <span className="text-gray-500 dark:text-gray-400">Timestamp:</span>
+                                         <span className="font-mono text-gray-700 dark:text-gray-300">{new Date(viewError.timestamp).toLocaleString()}</span>
                                      </div>
                                  </div>
                             </div>
@@ -267,12 +274,17 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 </div>
             )}
 
-            <nav className="bg-slate-900 text-white shadow-lg px-6 py-4 flex justify-between items-center sticky top-0 z-30">
+            <nav className="bg-slate-900 dark:bg-black text-white shadow-lg px-6 py-4 flex justify-between items-center sticky top-0 z-30 border-b border-slate-800">
                 <div className="flex items-center gap-3">
                     <Shield className="w-6 h-6 text-indigo-400" /> 
                     <span className="font-bold text-xl tracking-tight">Admin Portal</span>
                 </div>
                 <div className="flex items-center gap-4">
+                     {toggleTheme && (
+                        <button onClick={toggleTheme} className="p-2 text-gray-400 hover:text-white transition-colors rounded-full hover:bg-slate-800">
+                            {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                        </button>
+                     )}
                      <button 
                         onClick={() => fetchAdminData()} 
                         disabled={loading}
@@ -281,7 +293,7 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                      >
                         <RefreshCw className={`w-4 h-4 text-slate-400 ${loading ? 'animate-spin' : ''}`} />
                      </button>
-                     <span className="text-sm text-slate-400">admin@admin.com</span>
+                     <span className="text-sm text-slate-400 hidden sm:inline">{userEmail || 'Admin'}</span>
                     <button onClick={onLogout} className="text-sm font-medium bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors shadow-sm flex items-center gap-2">
                         <LogOut className="w-4 h-4" /> Logout
                     </button>
@@ -290,11 +302,11 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
             <main className="max-w-7xl mx-auto p-6 space-y-6">
                 {dbError && (
-                    <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-sm">
+                    <div className="bg-red-100 dark:bg-red-900/30 border-l-4 border-red-500 text-red-700 dark:text-red-300 p-4 rounded shadow-sm">
                         <div className="flex items-center gap-2 font-bold"><AlertCircle className="w-5 h-5"/> Database Configuration Alert</div>
                         <p>{dbError}</p>
                         {dbError.includes("Recursion") && (
-                            <p className="text-sm mt-2 font-mono bg-red-50 p-2 rounded">
+                            <p className="text-sm mt-2 font-mono bg-red-50 dark:bg-red-900/10 p-2 rounded">
                                 SQL Fix Required: Run the specific policy fix script in Supabase SQL Editor.
                             </p>
                         )}
@@ -305,43 +317,43 @@ export function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <button 
                         onClick={() => setActiveView('users')}
-                        className={`p-6 rounded-xl shadow-sm border transition-all text-left flex items-center gap-4 hover:shadow-md
-                        ${activeView === 'users' ? 'bg-indigo-50 border-indigo-200 ring-1 ring-indigo-300' : 'bg-white border-gray-200 hover:border-indigo-100'}`}
+                        className={`p-6 rounded-xl shadow-sm border transition-all text-left flex items-center gap-4 hover:shadow-md duration-300
+                        ${activeView === 'users' ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-900/50 ring-1 ring-indigo-300 dark:ring-indigo-900/50' : 'bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 hover:border-indigo-100 dark:hover:border-slate-700'}`}
                     >
-                        <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 shrink-0">
+                        <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0">
                             <Users className="w-6 h-6" />
                         </div>
                         <div>
-                            <div className="text-gray-500 text-xs font-bold uppercase tracking-wider">Total Users</div>
-                            <div className="text-3xl font-bold text-gray-900">{loading ? '...' : stats.totalUsers}</div>
+                            <div className="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase tracking-wider">Total Users</div>
+                            <div className="text-3xl font-bold text-gray-900 dark:text-white">{loading ? '...' : stats.totalUsers}</div>
                         </div>
                     </button>
 
                     <button 
                          onClick={() => setActiveView('errors')}
-                         className={`p-6 rounded-xl shadow-sm border transition-all text-left flex items-center gap-4 hover:shadow-md
-                         ${activeView === 'errors' ? 'bg-indigo-50 border-indigo-200 ring-1 ring-indigo-300' : 'bg-white border-gray-200 hover:border-indigo-100'}`}
+                         className={`p-6 rounded-xl shadow-sm border transition-all text-left flex items-center gap-4 hover:shadow-md duration-300
+                         ${activeView === 'errors' ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-900/50 ring-1 ring-indigo-300 dark:ring-indigo-900/50' : 'bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 hover:border-indigo-100 dark:hover:border-slate-700'}`}
                     >
-                        <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-600 shrink-0">
+                        <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center text-green-600 dark:text-green-400 shrink-0">
                             <FileWarning className="w-6 h-6" />
                         </div>
                         <div>
-                            <div className="text-gray-500 text-xs font-bold uppercase tracking-wider">Total Errors Analyzed</div>
-                            <div className="text-3xl font-bold text-gray-900">{loading ? '...' : stats.totalErrors}</div>
+                            <div className="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase tracking-wider">Total Errors Analyzed</div>
+                            <div className="text-3xl font-bold text-gray-900 dark:text-white">{loading ? '...' : stats.totalErrors}</div>
                         </div>
                     </button>
 
                     <button 
                          onClick={() => setActiveView('overview')}
-                         className={`p-6 rounded-xl shadow-sm border transition-all text-left flex items-center gap-4 hover:shadow-md
-                         ${activeView === 'overview' ? 'bg-indigo-50 border-indigo-200 ring-1 ring-indigo-300' : 'bg-white border-gray-200 hover:border-indigo-100'}`}
+                         className={`p-6 rounded-xl shadow-sm border transition-all text-left flex items-center gap-4 hover:shadow-md duration-300
+                         ${activeView === 'overview' ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-900/50 ring-1 ring-indigo-300 dark:ring-indigo-900/50' : 'bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 hover:border-indigo-100 dark:hover:border-slate-700'}`}
                     >
-                        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 shrink-0">
+                        <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
                             <Activity className="w-6 h-6" />
                         </div>
                         <div>
-                            <div className="text-gray-500 text-xs font-bold uppercase tracking-wider">System Status</div>
-                            <div className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+                            <div className="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase tracking-wider">System Status</div>
+                            <div className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                                 <span className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></span>
                                 Online
                             </div>
