@@ -90,8 +90,20 @@ export const analyzeLog = async (logContent: string, toolName: string = "Talend"
       timestamp: Date.now(),
       tool: toolName,
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Gemini Analysis Error:", error);
+    
+    // Gracefully handle 429 Quota Exceeded / Resource Exhausted errors
+    if (
+        error?.status === 429 || 
+        error?.response?.status === 429 ||
+        error?.message?.includes('429') || 
+        error?.message?.includes('quota') || 
+        error?.message?.includes('RESOURCE_EXHAUSTED')
+    ) {
+        throw new Error("⚠️ AI Quota Exceeded: The system is receiving too many requests. Please try again in a minute.");
+    }
+
     throw error;
   }
 };

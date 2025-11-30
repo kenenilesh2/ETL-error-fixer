@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect, useRef } from 'react';
-import { Upload, Search, Loader2, Database, AlertCircle, ArrowLeft, LogOut, Shield, X, CheckCircle, Terminal, Copy, Check, Menu, Moon, Sun } from 'lucide-react';
+import { Upload, Search, Loader2, Database, AlertCircle, ArrowLeft, LogOut, Shield, X, CheckCircle, Terminal, Copy, Check, Menu, Moon, Sun, Sparkles, Command, ChevronRight } from 'lucide-react';
 import { analyzeLog } from './services/geminiService';
 import { AnalysisResult, StoredError } from './types';
 import { AnalysisCard } from './components/AnalysisCard';
@@ -297,8 +296,9 @@ function App() {
             setHistory([newError, ...history]);
             setCurrentResult(result);
       }
-    } catch (err) {
-      setErrorMsg("Failed to analyze log. Please try again.");
+    } catch (err: any) {
+      const message = err.message || "Failed to analyze log. Please try again.";
+      setErrorMsg(message);
       console.error(err);
     } finally {
       setIsAnalyzing(false);
@@ -472,62 +472,96 @@ function App() {
       );
   }
 
-  // --- LANDING PAGE VIEW ---
+  // --- LANDING PAGE VIEW (Opening Page) ---
   if (!selectedTool) {
       return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-slate-950 dark:to-slate-900 flex flex-col items-center justify-center p-6 relative transition-colors duration-300">
-          <div className="absolute top-0 left-0 right-0 p-6 flex justify-between items-center z-10">
-              <h1 className="text-xl font-bold text-gray-800 dark:text-white tracking-tight flex items-center gap-2">
-                 <Shield className="w-6 h-6 text-indigo-600 dark:text-indigo-400" /> ETL Remedy
-              </h1>
-              <div className="flex items-center gap-4">
-                  <div className="flex flex-col items-end mr-2 hidden md:flex">
-                      <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">{session.user.user_metadata?.first_name || 'Developer'}</span>
-                      <span className="text-xs text-gray-400">{session.user.email}</span>
-                  </div>
-                  <button onClick={toggleTheme} className="p-2 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-slate-800 rounded-full transition-colors">
-                      {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-                  </button>
-                  <button 
-                    onClick={handleLogout} 
-                    className="p-2 text-gray-500 dark:text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-all" 
-                    title="Sign Out"
-                  >
-                    <LogOut className="w-5 h-5" />
-                  </button>
-              </div>
-          </div>
-
-          <div className="max-w-5xl w-full z-10 mt-10">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white mb-4 tracking-tight">
-                Select your ETL Platform
-              </h2>
-              <p className="text-sm md:text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto px-4">
-                Our AI specializes in debugging logs from major enterprise integration tools. Choose your platform to start analyzing.
-              </p>
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col relative transition-colors duration-300 font-sans selection:bg-indigo-500/30 selection:text-indigo-600 dark:selection:text-indigo-300">
+            {/* Ambient Background Effects */}
+            <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+                 <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:24px_24px]"></div>
+                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-indigo-500/10 dark:bg-indigo-500/20 blur-[120px] rounded-full"></div>
+                 <div className="absolute bottom-0 right-0 w-[600px] h-[400px] bg-blue-500/10 dark:bg-blue-600/10 blur-[100px] rounded-full"></div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-              {TOOLS.map((tool) => (
-                <button
-                  key={tool.id}
-                  onClick={() => handleToolSelect(tool.id)}
-                  className="group bg-white dark:bg-slate-800 rounded-xl p-4 md:p-6 shadow-sm hover:shadow-xl border border-gray-200 dark:border-slate-700 hover:border-indigo-100 dark:hover:border-indigo-900 transition-all duration-300 flex flex-col items-center text-center transform hover:-translate-y-1 active:scale-95"
-                >
-                  <div className="w-12 h-12 md:w-16 md:h-16 mb-4 flex items-center justify-center p-2 rounded-2xl bg-gray-50 dark:bg-slate-900 group-hover:bg-white dark:group-hover:bg-slate-800 group-hover:scale-110 transition-transform duration-300">
-                    <tool.icon className="w-full h-full" />
-                  </div>
-                  <h3 className="font-bold text-sm md:text-lg mb-1 text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                    {tool.name}
-                  </h3>
-                  <p className="text-[10px] md:text-xs text-gray-400 font-medium uppercase tracking-wide">
-                    {tool.description}
-                  </p>
-                </button>
-              ))}
-            </div>
-          </div>
+            {/* Navigation */}
+            <header className="sticky top-0 z-50 w-full backdrop-blur-lg bg-white/70 dark:bg-slate-900/70 border-b border-gray-200/50 dark:border-slate-800/50">
+                <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                         <div className="bg-gradient-to-br from-indigo-600 to-violet-600 p-2 rounded-xl shadow-lg shadow-indigo-500/20">
+                            <Shield className="w-6 h-6 text-white" />
+                         </div>
+                         <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300 tracking-tight">
+                             ETL Remedy
+                         </h1>
+                    </div>
+                    
+                    <div className="flex items-center gap-4">
+                        <div className="hidden md:flex flex-col items-end mr-2">
+                             <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                                {session.user.user_metadata?.first_name || 'Developer'}
+                             </span>
+                             <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold">
+                                Enterprise User
+                             </span>
+                        </div>
+                        <div className="h-8 w-px bg-slate-200 dark:bg-slate-700 hidden md:block"></div>
+                        <button onClick={toggleTheme} className="p-2.5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+                            {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                        </button>
+                        <button 
+                            onClick={handleLogout} 
+                            className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 border border-slate-200 dark:border-slate-700 rounded-full transition-all text-sm font-medium shadow-sm hover:shadow-md" 
+                        >
+                            <LogOut className="w-4 h-4" /> <span className="hidden sm:inline">Sign Out</span>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            {/* Main Content */}
+            <main className="flex-1 max-w-7xl mx-auto px-6 pt-16 pb-24 relative z-10 w-full">
+                <div className="text-center mb-16 max-w-3xl mx-auto">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-xs font-bold uppercase tracking-widest border border-indigo-100 dark:border-indigo-800 mb-6">
+                        <Sparkles className="w-3 h-3" /> Intelligent Log Analysis
+                    </div>
+                    <h2 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-slate-900 dark:text-white mb-6 tracking-tight leading-tight">
+                        Select your <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400">ETL Platform</span>
+                    </h2>
+                    <p className="text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
+                        Identify errors instantly. Get code-level fixes. Analyze logs from Talend, Informatica, and more with our enterprise-grade AI engine.
+                    </p>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    {TOOLS.map((tool) => (
+                        <button
+                            key={tool.id}
+                            onClick={() => handleToolSelect(tool.id)}
+                            className="group relative bg-white dark:bg-slate-900 rounded-2xl p-6 md:p-8 shadow-sm hover:shadow-2xl border border-slate-200 dark:border-slate-800 hover:border-indigo-500/50 dark:hover:border-indigo-500/50 transition-all duration-500 flex flex-col items-center text-center overflow-hidden"
+                        >
+                            {/* Hover Gradient Overlay */}
+                            <div className="absolute inset-0 bg-gradient-to-b from-indigo-50/0 to-indigo-50/50 dark:from-indigo-900/0 dark:to-indigo-900/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                            
+                            <div className="relative z-10 w-16 h-16 mb-6 flex items-center justify-center p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 group-hover:bg-white dark:group-hover:bg-slate-700 shadow-inner group-hover:scale-110 transition-transform duration-500">
+                                <tool.icon className="w-full h-full drop-shadow-sm" />
+                            </div>
+                            
+                            <div className="relative z-10">
+                                <h3 className="font-bold text-lg text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors mb-1">
+                                    {tool.name}
+                                </h3>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wide">
+                                    {tool.description}
+                                </p>
+                            </div>
+
+                            <div className="absolute bottom-4 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 text-indigo-600 dark:text-indigo-400 text-xs font-bold flex items-center gap-1">
+                                Analyze Logs <ChevronRight className="w-3 h-3" />
+                            </div>
+                        </button>
+                    ))}
+                </div>
+            </main>
         </div>
       );
   }

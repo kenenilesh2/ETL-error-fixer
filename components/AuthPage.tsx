@@ -348,7 +348,7 @@ END $$;
                         type="password" 
                         required 
                         minLength={6}
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-gray-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 text-gray-900 dark:text-white"
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-gray-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 text-gray-900 dark:text-white text-base"
                         placeholder="••••••••"
                         value={password}
                         onChange={e => setPassword(e.target.value)}
@@ -359,7 +359,7 @@ END $$;
                    <button 
                     type="submit" 
                     disabled={loading}
-                    className="w-full bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white font-semibold py-3 rounded-lg transition-all shadow-lg hover:shadow-xl mt-6 flex items-center justify-center gap-2"
+                    className="w-full bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white font-semibold py-3.5 rounded-xl transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 mt-6 flex items-center justify-center gap-2"
                     >
                     {loading && <Loader2 className="w-5 h-5 animate-spin" />}
                     Update Password
@@ -388,7 +388,7 @@ END $$;
                           type="text" 
                           required 
                           maxLength={8}
-                          className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all tracking-[0.5em] font-mono text-center font-bold text-lg text-gray-800 dark:text-white bg-white dark:bg-slate-800"
+                          className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all tracking-[0.5em] font-mono text-center font-bold text-lg text-gray-800 dark:text-white bg-white dark:bg-slate-800 text-base"
                           placeholder="000000"
                           value={otp}
                           onChange={e => setOtp(e.target.value.replace(/[^0-9]/g, ''))}
@@ -399,7 +399,7 @@ END $$;
                   <button 
                       type="submit" 
                       disabled={loading || otp.length < 6}
-                      className="w-full bg-slate-900 hover:bg-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600 text-white font-semibold py-3 rounded-lg transition-all shadow-lg hover:shadow-xl mt-6 flex items-center justify-center gap-2 disabled:opacity-50"
+                      className="w-full bg-slate-900 hover:bg-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600 text-white font-semibold py-3.5 rounded-xl transition-all shadow-lg hover:shadow-xl mt-6 flex items-center justify-center gap-2 disabled:opacity-50"
                       >
                       {loading && <Loader2 className="w-5 h-5 animate-spin" />}
                       Verify Code
@@ -449,7 +449,7 @@ END $$;
                             type="text" 
                             required 
                             maxLength={8}
-                            className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all tracking-[0.5em] font-mono text-center font-bold text-xl text-gray-800 dark:text-white bg-white dark:bg-slate-800"
+                            className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all tracking-[0.5em] font-mono text-center font-bold text-xl text-gray-800 dark:text-white bg-white dark:bg-slate-800 text-base"
                             placeholder="000000"
                             value={otp}
                             onChange={e => setOtp(e.target.value.replace(/[^0-9]/g, ''))}
@@ -459,7 +459,7 @@ END $$;
                     <button 
                         type="submit" 
                         disabled={loading || otp.length < 6}
-                        className="w-full bg-slate-900 hover:bg-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600 text-white font-semibold py-3 rounded-lg transition-all shadow-lg hover:shadow-xl mt-6 flex items-center justify-center gap-2 disabled:opacity-50"
+                        className="w-full bg-slate-900 hover:bg-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600 text-white font-semibold py-3.5 rounded-xl transition-all shadow-lg hover:shadow-xl mt-6 flex items-center justify-center gap-2 disabled:opacity-50"
                         >
                         {loading && <Loader2 className="w-5 h-5 animate-spin" />}
                         Verify & Access
@@ -504,7 +504,7 @@ END $$;
                         <input 
                         type="email" 
                         required 
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-gray-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 text-gray-900 dark:text-white"
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-gray-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 text-gray-900 dark:text-white text-base"
                         placeholder="name@company.com"
                         value={email}
                         onChange={e => setEmail(e.target.value)}
@@ -514,7 +514,7 @@ END $$;
                    <button 
                     type="submit" 
                     disabled={loading}
-                    className="w-full bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white font-semibold py-3 rounded-lg transition-all shadow-lg hover:shadow-xl mt-6 flex items-center justify-center gap-2"
+                    className="w-full bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white font-semibold py-3.5 rounded-xl transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 mt-6 flex items-center justify-center gap-2"
                     >
                     {loading && <Loader2 className="w-5 h-5 animate-spin" />}
                     Send Recovery Code
@@ -560,7 +560,7 @@ END $$;
                         <input 
                             type="text" 
                             required 
-                            className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-gray-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 text-gray-900 dark:text-white"
+                            className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-gray-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 text-gray-900 dark:text-white text-base"
                             placeholder="John"
                             value={firstName}
                             onChange={e => setFirstName(e.target.value)}
@@ -574,7 +574,7 @@ END $$;
                         <input 
                             type="tel" 
                             required 
-                            className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-gray-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 text-gray-900 dark:text-white"
+                            className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-gray-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 text-gray-900 dark:text-white text-base"
                             placeholder="+1 234..."
                             value={mobile}
                             onChange={e => setMobile(e.target.value)}
@@ -591,7 +591,7 @@ END $$;
                 <input 
                   type="email" 
                   required 
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-gray-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 text-gray-900 dark:text-white"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-gray-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 text-gray-900 dark:text-white text-base"
                   placeholder="name@company.com"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
@@ -606,7 +606,7 @@ END $$;
                 <input 
                   type="password" 
                   required 
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-gray-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 text-gray-900 dark:text-white"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-gray-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 text-gray-900 dark:text-white text-base"
                   placeholder="••••••••"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
@@ -636,12 +636,33 @@ END $$;
             <button 
               type="submit" 
               disabled={loading}
-              className="w-full bg-slate-900 hover:bg-slate-800 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white font-semibold py-3 rounded-lg transition-all shadow-lg hover:shadow-xl mt-6 flex items-center justify-center gap-2 transform active:scale-[0.98]"
+              className="w-full bg-slate-900 hover:bg-slate-800 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white font-semibold py-3.5 rounded-xl transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 mt-6 flex items-center justify-center gap-2 transform active:scale-[0.98]"
             >
               {loading && <Loader2 className="w-5 h-5 animate-spin" />}
               {view === 'login' ? 'Sign In' : 'Create Account'}
             </button>
             
+            {showAdminFix && (
+                <div className="mt-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-900/30 rounded-lg text-sm animate-fade-in">
+                    <div className="flex items-center gap-2 font-bold text-yellow-800 dark:text-yellow-200 mb-2">
+                        <Shield className="w-4 h-4" /> Admin Login Fix
+                    </div>
+                    <p className="text-yellow-700 dark:text-yellow-300 text-xs mb-3 leading-relaxed">
+                        If you cannot login as <strong>kenenilesh2@gmail.com</strong>, the user might be missing or the password incorrect. 
+                        Run this SQL in Supabase to force-reset it to <strong>admin@123</strong>.
+                    </p>
+                    <div className="bg-slate-800 rounded p-3 relative group border border-yellow-500/20">
+                        <pre className="text-[10px] text-green-400 font-mono overflow-x-auto whitespace-pre-wrap max-h-32 scrollbar-thin">{adminFixSql}</pre>
+                        <button 
+                            onClick={() => handleCopySql(adminFixSql)}
+                            className="absolute top-2 right-2 p-1.5 bg-white/10 hover:bg-white/20 rounded text-white transition-colors"
+                            title="Copy SQL"
+                        >
+                            {copiedSql ? <Check className="w-3 h-3"/> : <Copy className="w-3 h-3"/>}
+                        </button>
+                    </div>
+                </div>
+            )}
             
         </form>
       );
@@ -700,76 +721,88 @@ END $$;
       </div>
 
       {/* RIGHT SIDE - FORM */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-6 lg:p-12 relative overflow-hidden lg:overflow-visible">
-         {/* Mobile-only Background Decor */}
-         <div className="absolute inset-0 lg:hidden pointer-events-none z-0">
-            <div className="absolute top-[-10%] right-[-10%] w-[70%] h-[40%] bg-indigo-100/60 dark:bg-indigo-900/20 rounded-full blur-[80px]"></div>
-            <div className="absolute bottom-[-10%] left-[-10%] w-[70%] h-[40%] bg-purple-100/60 dark:bg-purple-900/20 rounded-full blur-[80px]"></div>
+      <div className="w-full lg:w-1/2 flex items-center justify-center min-h-screen lg:min-h-0 p-6 relative overflow-hidden bg-gray-50 dark:bg-slate-950 lg:bg-transparent">
+         
+         {/* Enhanced Mobile Background */}
+         <div className="absolute inset-0 lg:hidden z-0 overflow-hidden">
+            <div className="absolute -top-[20%] -left-[10%] w-[80%] h-[50%] bg-indigo-500/10 rounded-full blur-[80px] animate-pulse-slow"></div>
+            <div className="absolute top-[30%] -right-[20%] w-[60%] h-[60%] bg-purple-500/10 rounded-full blur-[100px] animate-pulse-slow delay-1000"></div>
+            <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-white dark:from-slate-950 to-transparent"></div>
+            
+            {/* Grid Pattern Overlay */}
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:24px_24px]"></div>
          </div>
 
          {/* Theme Toggle for Mobile */}
          <div className="absolute top-6 right-6 z-20">
              <button 
                 onClick={toggleTheme}
-                className="p-2 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+                className="p-3 text-slate-500 dark:text-slate-400 bg-white/50 dark:bg-slate-800/50 backdrop-blur-md border border-slate-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-800 rounded-full transition-all shadow-sm"
              >
-                {isDarkMode ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
+                {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
              </button>
          </div>
 
-         <div className="max-w-md w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md lg:bg-transparent lg:backdrop-blur-none rounded-3xl lg:rounded-none shadow-xl lg:shadow-none p-8 lg:p-0 border border-white/50 dark:border-slate-800 lg:border-none relative z-10 transition-colors duration-300">
-             {/* Mobile Logo Enhanced */}
-             <div className="lg:hidden flex flex-col items-center gap-3 mb-8 justify-center">
-                  <div className="bg-gradient-to-br from-indigo-600 to-indigo-800 p-3 rounded-2xl shadow-lg shadow-indigo-200 dark:shadow-none">
-                    <Shield className="w-8 h-8 text-white" />
+         <div className="w-full max-w-[400px] relative z-10">
+             
+             {/* Mobile Logo Section */}
+             <div className="lg:hidden flex flex-col items-center mb-10 animate-fade-in-up">
+                  <div className="w-20 h-20 bg-gradient-to-tr from-indigo-600 to-violet-600 rounded-2xl shadow-xl shadow-indigo-500/30 flex items-center justify-center mb-6 transform rotate-3 ring-4 ring-white dark:ring-slate-900">
+                    <Shield className="w-10 h-10 text-white" />
                   </div>
-                  <h1 className="font-extrabold text-2xl tracking-tight text-slate-800 dark:text-white">ETL Remedy</h1>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase tracking-widest">Enterprise Log Analysis</p>
+                  <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight text-center">ETL Remedy</h1>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 font-medium text-center mt-2 max-w-xs leading-relaxed">
+                    Enterprise-grade log analysis and remediation platform
+                  </p>
              </div>
 
-             <div className="mb-8">
-                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                     {view === 'login' ? 'Welcome back' : 
-                      view === 'register' ? 'Get started' : 
-                      view === 'verify' || view === 'verify_recovery' ? 'Verification' : 
-                      view === 'reset_password' || view === 'update_password' ? 'Set New Password' : 
-                      'Reset Password'}
-                 </h2>
-                 <p className="text-gray-500 dark:text-gray-400 mt-2 text-sm">
-                     {view === 'login' && 'Please enter your details to sign in.'}
-                     {view === 'register' && 'Create a new account to start analyzing logs.'}
-                     {view === 'verify' && 'Check your email for the signup code.'}
-                     {view === 'verify_recovery' && 'Check your email for the recovery code.'}
-                     {(view === 'reset_password' || view === 'update_password') && 'Create a strong password to secure your account.'}
-                     {view === 'forgot' && 'We will check if you are registered first.'}
-                 </p>
+             {/* Main Glass Card */}
+             <div className="bg-white/70 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 dark:border-slate-700/50 p-8 lg:bg-transparent lg:backdrop-blur-none lg:shadow-none lg:border-none lg:p-0 transition-all duration-300">
+                 
+                 <div className="mb-8 text-center lg:text-left">
+                     <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                         {view === 'login' ? 'Welcome back' : 
+                          view === 'register' ? 'Get started' : 
+                          view === 'verify' || view === 'verify_recovery' ? 'Verification' : 
+                          view === 'reset_password' || view === 'update_password' ? 'Set New Password' : 
+                          'Reset Password'}
+                     </h2>
+                     <p className="text-slate-500 dark:text-slate-400 mt-2 text-sm">
+                         {view === 'login' && 'Please enter your details to sign in.'}
+                         {view === 'register' && 'Create a new account to start analyzing logs.'}
+                         {view === 'verify' && 'Check your email for the signup code.'}
+                         {view === 'verify_recovery' && 'Check your email for the recovery code.'}
+                         {(view === 'reset_password' || view === 'update_password') && 'Create a strong password to secure your account.'}
+                         {view === 'forgot' && 'We will check if you are registered first.'}
+                     </p>
+                 </div>
+
+                 {msg && (
+                    <div className={`mb-6 p-4 rounded-xl text-sm flex items-start gap-3 shadow-sm ${msg.type === 'error' ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-100 dark:border-red-900/30' : 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border border-green-100 dark:border-green-900/30'}`}>
+                    {msg.type === 'success' ? <CheckCircle className="w-5 h-5 mt-0.5 shrink-0" /> : <AlertCircle className="w-5 h-5 mt-0.5 shrink-0" />}
+                    <span className="font-medium leading-relaxed">{msg.text}</span>
+                    </div>
+                )}
+
+                {renderForm()}
+
+                {view !== 'forgot' && view !== 'verify' && view !== 'verify_recovery' && view !== 'reset_password' && view !== 'update_password' && (
+                    <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800 text-center">
+                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                            {view === 'login' ? "Don't have an account?" : "Already have an account?"}
+                            <button 
+                            onClick={() => {
+                                setView(view === 'login' ? 'register' : 'login');
+                                setMsg(null);
+                            }}
+                            className="ml-2 text-indigo-600 dark:text-indigo-400 font-bold hover:text-indigo-800 dark:hover:text-indigo-300 transition-colors"
+                            >
+                            {view === 'login' ? 'Sign up for free' : 'Log In'}
+                            </button>
+                        </p>
+                    </div>
+                )}
              </div>
-
-             {msg && (
-                <div className={`mb-6 p-4 rounded-lg text-sm flex items-start gap-3 shadow-sm ${msg.type === 'error' ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-100 dark:border-red-900/30' : 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border border-green-100 dark:border-green-900/30'}`}>
-                {msg.type === 'success' ? <CheckCircle className="w-5 h-5 mt-0.5 shrink-0" /> : <AlertCircle className="w-5 h-5 mt-0.5 shrink-0" />}
-                <span className="font-medium leading-relaxed">{msg.text}</span>
-                </div>
-            )}
-
-            {renderForm()}
-
-            {view !== 'forgot' && view !== 'verify' && view !== 'verify_recovery' && view !== 'reset_password' && view !== 'update_password' && (
-                <div className="mt-8 pt-6 border-t border-gray-100 dark:border-slate-800 text-center">
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {view === 'login' ? "Don't have an account?" : "Already have an account?"}
-                        <button 
-                        onClick={() => {
-                            setView(view === 'login' ? 'register' : 'login');
-                            setMsg(null);
-                        }}
-                        className="ml-2 text-indigo-600 dark:text-indigo-400 font-bold hover:text-indigo-800 dark:hover:text-indigo-300 transition-colors"
-                        >
-                        {view === 'login' ? 'Sign up for free' : 'Log In'}
-                        </button>
-                    </p>
-                </div>
-            )}
          </div>
       </div>
     </div>
